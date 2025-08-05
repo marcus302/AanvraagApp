@@ -23,4 +23,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.group.dev.dependencies]
 debugpy = "^1.8.15"
 uvicorn = "^0.35.0"
-
