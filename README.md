@@ -3,6 +3,8 @@ Write proposals for whatever blazingly fast
 
 # DEV
 
+## Environment
+
 Activate dev shell.
 ```bash
 nix develop
@@ -11,6 +13,24 @@ nix develop
 Run locally.
 ```
 poetry run python -m debugpy --listen 0.0.0.0:5678 -m uvicorn aanvraagapp:app --host 0.0.0.0 --port 8000 --reload
+```
+
+## Database Management
+
+### Setting up the database
+
+To create all database tables:
+
+```bash
+poetry run python -m tests.db_utils setup
+```
+
+### Cleaning up the database
+
+To drop all database tables:
+
+```bash
+poetry run python -m tests.db_utils teardown
 ```
 
 ```mermaid
