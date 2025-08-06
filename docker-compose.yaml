@@ -1,0 +1,18 @@
+services:
+  app:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+      - 5678:5678
+    volumes:
+      - ./data/aanvraagapp.db:/app/aanvraagapp.db
+    depends_on:
+      - redis
+  redis:
+    platform: linux/amd64
+    image: "redis:alpine"
+    ports:
+      - 6379:6379
