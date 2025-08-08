@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy import ForeignKey, Table, Column, Integer, DateTime
+from sqlalchemy import ForeignKey, Table, Column, Integer, DateTime, String
 from typing import List, Optional
 from datetime import datetime, timezone
 
@@ -78,6 +78,8 @@ provider_context_association = Table(
 
 class User(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
+    first_name: Mapped[str] = mapped_column(String)
+    last_name: Mapped[str] = mapped_column(String)
     
     clients: Mapped[List["Client"]] = relationship(secondary=user_client_association, back_populates="users", lazy="select")
     listings: Mapped[List["Listing"]] = relationship(secondary=user_listing_association, back_populates="users", lazy="select")

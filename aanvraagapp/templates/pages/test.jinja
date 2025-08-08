@@ -1,0 +1,97 @@
+{% extends "layouts/authenticated.jinja" %}
+
+{% block title %}Listings - {{ super() }}{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <h1 class="content-title">Listings</h1>
+        <p class="content-subtitle">Manage and monitor active job listings</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card" style="animation-delay: 0.1s;">
+            <div class="stat-label">Total Listings</div>
+            <div class="stat-value">247</div>
+        </div>
+        <div class="stat-card" style="animation-delay: 0.2s;">
+            <div class="stat-label">Active</div>
+            <div class="stat-value">183</div>
+        </div>
+        <div class="stat-card" style="animation-delay: 0.3s;">
+            <div class="stat-label">Applications</div>
+            <div class="stat-value">1,842</div>
+        </div>
+        <div class="stat-card" style="animation-delay: 0.4s;">
+            <div class="stat-label">Avg. Response Time</div>
+            <div class="stat-value">2.4d</div>
+        </div>
+    </div>
+
+    <div class="data-grid">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h3 class="data-card-title">Senior Full Stack Developer</h3>
+                <span class="data-card-badge">Active</span>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">TechCorp Solutions • Remote • $120k-150k</p>
+            <div class="data-card-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Provider</span>
+                    <span class="meta-value">GlobalTech Inc.</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Applications</span>
+                    <span class="meta-value">47</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Posted</span>
+                    <span class="meta-value">3 days ago</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <div class="data-card-header">
+                <h3 class="data-card-title">Product Manager</h3>
+                <span class="data-card-badge">Active</span>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Innovation Labs • San Francisco, CA • $140k-180k</p>
+            <div class="data-card-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Provider</span>
+                    <span class="meta-value">StartupVentures</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Applications</span>
+                    <span class="meta-value">92</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Posted</span>
+                    <span class="meta-value">1 week ago</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <div class="data-card-header">
+                <h3 class="data-card-title">UX/UI Designer</h3>
+                <span class="data-card-badge">Active</span>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Creative Studio • New York, NY • $90k-120k</p>
+            <div class="data-card-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Provider</span>
+                    <span class="meta-value">DesignHub Pro</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Applications</span>
+                    <span class="meta-value">156</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Posted</span>
+                    <span class="meta-value">5 days ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

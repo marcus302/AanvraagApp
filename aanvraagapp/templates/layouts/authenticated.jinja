@@ -1,0 +1,38 @@
+{% extends "base.jinja" %}
+
+{% block body %}
+    <header class="header">
+        <div class="header-content">
+                <div class="user-profile">
+                    <svg class="user-icon" viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span class="user-name">{{ current_user.first_name }}</span>
+                </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item {% if active_page == 'clients' %}active{% endif %}">
+                        <a href="/clients">Clients</a>
+                    </li>
+                    <li class="nav-item {% if active_page == 'listings' %}active{% endif %}">
+                        <a href="/listings">Listings</a>
+                    </li>
+                    <li class="nav-item {% if active_page == 'applications' %}active{% endif %}">
+                        <a href="/applications">Applications</a>
+                    </li>
+                    <li class="nav-item {% if active_page == 'providers' %}active{% endif %}">
+                        <a href="/providers">Providers</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main class="main-container">
+        <div id="content-area">
+            {% block content %}
+                <!-- Page-specific content goes here -->
+            {% endblock %}
+        </div>
+    </main>
+{% endblock %}

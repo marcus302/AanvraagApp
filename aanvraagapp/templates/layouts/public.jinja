@@ -1,0 +1,28 @@
+{% extends "base.jinja" %}
+
+{% block body %}
+    <header class="header header-public">
+        <div class="header-content">
+            <div class="logo">
+                <h1>AanvraagApp</h1>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item {% if active_page == 'login' %}active{% endif %}">
+                        <a href="/login">Login</a>
+                    </li>
+                    <li class="nav-item {% if active_page == 'register' %}active{% endif %}">
+                        <a href="/register">Sign Up</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main class="main-container">
+        <div id="content-area">
+            {% block content %}
+                <!-- Page-specific content goes here -->
+            {% endblock %}
+        </div>
+    </main>
+{% endblock %}
