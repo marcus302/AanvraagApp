@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import redis.asyncio as redis
-
+from redis import Redis
+from typing import Annotated
+from fastapi import Depends
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -30,7 +32,13 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+DBSession = Annotated[AsyncSession, Depends(get_async_session)]
+
+
 async def get_redis_client():
     client = redis.Redis.from_pool(redis.ConnectionPool.from_url(REDIS_URI, decode_responses=True))
     yield client
     await client.aclose()
+
+
+RedisSession = Annotated[Redis, Depends(get_redis_client)]
