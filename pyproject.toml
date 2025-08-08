@@ -15,7 +15,8 @@ dependencies = [
     "aiosqlite (>=0.21.0,<0.22.0)",
     "redis[hiredis] (>=6.3.0,<7.0.0)",
     "python-multipart (>=0.0.20,<0.0.21)",
-    "pydantic[email] (>=2.11.7,<3.0.0)"
+    "pydantic[email] (>=2.11.7,<3.0.0)",
+    "pwdlib[argon2] (>=0.2.1,<0.3.0)"
 ]
 
 

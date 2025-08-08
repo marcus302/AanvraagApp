@@ -32,7 +32,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-DBSession = Annotated[AsyncSession, Depends(get_async_session)]
+DBSession: AsyncSession = Depends(get_async_session)
 
 
 async def get_redis_client():
@@ -41,4 +41,4 @@ async def get_redis_client():
     await client.aclose()
 
 
-RedisSession = Annotated[Redis, Depends(get_redis_client)]
+RedisSession: Redis = Depends(get_redis_client)

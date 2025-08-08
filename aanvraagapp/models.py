@@ -80,7 +80,8 @@ class User(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     first_name: Mapped[str] = mapped_column(String)
     last_name: Mapped[str] = mapped_column(String)
-    
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     clients: Mapped[List["Client"]] = relationship(secondary=user_client_association, back_populates="users", lazy="select")
     listings: Mapped[List["Listing"]] = relationship(secondary=user_listing_association, back_populates="users", lazy="select")
     user_context: Mapped[Optional["UserContext"]] = relationship(back_populates="user", lazy="select", uselist=False)
