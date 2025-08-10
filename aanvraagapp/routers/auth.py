@@ -4,14 +4,19 @@ from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 from ..database import DBSession, RedisSession
 from ..models import User
-from ..dependencies import ValidateLogin, LoginAttemptRes
+from ..dependencies import ValidateLogin, LoginAttemptRes, RedirectIfAuthenticated
 from ..templates import templates
 
 router = APIRouter()
 
 
 @router.get("/login", response_class=HTMLResponse)
-async def login(request: Request):
+async def login(
+    request: Request,
+    redirect_result = RedirectIfAuthenticated
+):
+    if redirect_result:
+        return redirect_result
     return templates.TemplateResponse("pages/login.jinja", {"request": request, "active_page": "login"})
 
 
@@ -37,7 +42,12 @@ async def login(
 
 
 @router.get("/register", response_class=HTMLResponse)
-async def register(request: Request):
+async def register(
+    request: Request,
+    redirect_result = RedirectIfAuthenticated
+):
+    if redirect_result:
+        return redirect_result
     return templates.TemplateResponse("pages/register.jinja", {"request": request, "active_page": "register"})
 
 

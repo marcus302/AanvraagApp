@@ -55,6 +55,14 @@ body {
 }
 
 .user-profile {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-profile-trigger {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -62,14 +70,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 15px rgba(90, 62, 255, 0.3);
     position: relative;
     overflow: hidden;
 }
 
-.user-profile::before {
+.user-profile-trigger::before {
     content: '';
     position: absolute;
     inset: -1px;
@@ -83,11 +90,11 @@ body {
     transition: opacity 0.3s;
 }
 
-.user-profile:hover::before {
+.user-profile:hover .user-profile-trigger::before {
     opacity: 1;
 }
 
-.user-profile:hover {
+.user-profile:hover .user-profile-trigger {
     transform: scale(1.1) rotate(5deg);
     box-shadow: 0 6px 25px rgba(90, 62, 255, 0.5);
 }
@@ -98,6 +105,63 @@ body {
     stroke: white;
     fill: none;
     stroke-width: 2;
+}
+
+/* User Dropdown */
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1001;
+}
+
+.user-profile:hover .user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s;
+    border-radius: 8px;
+    margin: 0.25rem;
+}
+
+.dropdown-item:hover {
+    background: rgba(100, 255, 218, 0.1);
+    color: var(--accent);
+    transform: translateX(5px);
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
+.user-name {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.875rem;
 }
 
 .nav-menu {

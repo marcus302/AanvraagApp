@@ -10,12 +10,3 @@ async def get_home_page(
     c: HomeController = Depends(HomeController)
 ):
     return await c.get_home()
-    # return templates.TemplateResponse(
-    #     "pages/home.jinja", 
-    #     {
-    #         "request": request, 
-    #         "current_user": current_user, 
-    #         "greeting": home_data,
-    #         "active_page": "home"
-    #     }
-    # )

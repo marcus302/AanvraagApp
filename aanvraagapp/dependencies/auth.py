@@ -201,3 +201,15 @@ async def validate_session(
 
 ValidateLogin: RedirectResponse | tuple[LoginAttemptRes, EmailStr, str] | tuple[LoginAttemptRes, EmailStr, str] = Depends(create_session_and_login)
 ValidateSession: models.User | ValidateSessionRes = Depends(validate_session)
+
+
+async def redirect_if_authenticated(
+    validate_session_result = ValidateSession
+) -> RedirectResponse | None:
+    """Redirect to /home if user has valid session, otherwise return None"""
+    if isinstance(validate_session_result, models.User):
+        return RedirectResponse(url="/home", status_code=302)
+    return None
+
+
+RedirectIfAuthenticated: RedirectResponse | None = Depends(redirect_if_authenticated)
