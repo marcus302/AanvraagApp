@@ -1,6 +1,8 @@
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import text
 from aanvraagapp import models
+from aanvraagapp.controllers.auth import password_helper
 
 
 async def delete_tables():
@@ -19,11 +21,51 @@ async def create_db_and_tables():
     await engine.dispose()
 
 
+async def create_dummy_users():
+    """Create dummy users with properly hashed passwords using plain SQL - for testing only"""
+    engine = create_async_engine("sqlite+aiosqlite:///./aanvraagapp.db")
+    
+    # Create dummy user data with hashed passwords
+    dummy_users = [
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "john.doe@example.com",
+            "hashed_password": password_helper.hash("password")
+        },
+        {
+            "first_name": "Jane",
+            "last_name": "Smith",
+            "email": "jane.smith@example.com", 
+            "hashed_password": password_helper.hash("password")
+        },
+        {
+            "first_name": "Bob",
+            "last_name": "Johnson",
+            "email": "bob.johnson@example.com",
+            "hashed_password": password_helper.hash("password")
+        }
+    ]
+    
+    async with engine.begin() as conn:
+        for user_data in dummy_users:
+            await conn.execute(
+                text("INSERT INTO user (first_name, last_name, email, hashed_password, created_at, updated_at) VALUES (:first_name, :last_name, :email, :hashed_password, datetime('now'), datetime('now'))"),
+                user_data
+            )
+    
+    await engine.dispose()
+    print("Dummy users created successfully!")
+
+
 async def init_db():
-    """Initialize the database by creating all tables - for testing only"""
+    """Initialize the database by creating all tables and dummy users - for testing only"""
     print("Creating database tables...")
     await create_db_and_tables()
     print("Database tables created successfully!")
+    
+    print("Creating dummy users...")
+    await create_dummy_users()
 
 
 async def cleanup_db():

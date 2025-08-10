@@ -1,0 +1,11 @@
+{% extends "layouts/authenticated.jinja" %}
+
+{% block title %}Home - {{ super() }}{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <h1 class="content-title">Home</h1>
+        <p class="content-subtitle">{{ greeting }}</p>
+    </div>
+
+{% endblock %}
