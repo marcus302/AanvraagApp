@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .routers import user_router, auth_router, home_router
 
-
 app = FastAPI()
 
 app.add_middleware(
