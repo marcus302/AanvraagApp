@@ -4,7 +4,7 @@ import json
 import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 from fastapi import Depends, Form, Request
 from fastapi.responses import RedirectResponse
@@ -13,8 +13,11 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from pydantic import EmailStr
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from jinja2 import Template
 
 from aanvraagapp.database import DBSession, RedisSession
+from aanvraagapp.templates import templates
+from aanvraagapp.email import send_email_mailhog
 
 from .. import models
 
@@ -67,6 +70,7 @@ async def validate_login(
     user = result.scalar_one_or_none()
 
     if user is None:
+        # Prevent timing attacks
         password_helper.hash(password)
         return LoginAttemptRes.EMAIL_404
 
@@ -184,6 +188,9 @@ async def validate_session(
             await redis_client.delete(redis_key)
             return ValidateSessionRes.NO_USER_FOUND
 
+        # Refresh session expiry time
+        await redis_client.expire(redis_key, SESSION_EXPIRY_HOURS * 3600)
+
         return user
 
     except (json.JSONDecodeError, KeyError, ValueError):
@@ -209,3 +216,56 @@ async def redirect_if_authenticated(
 
 
 RedirectIfAuthenticated: RedirectResponse | None = Depends(redirect_if_authenticated)
+
+
+class ResetPasswordRes(Enum):
+    EMAIL_404 = "email_404"
+    RESET_PW_EMAIL_SENT = "reset_pw_email_sent"
+
+
+async def reset_password(
+    email: EmailStr = Form(),
+    session: AsyncSession = DBSession,
+    redis_client=RedisSession,
+):
+    result = await session.execute(
+        select(models.User).where(
+            # TODO: func.strip does not exist...
+            func.lower(models.User.email) == email.strip().lower(),
+        )
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        template = cast(Template, templates.get_template("email/forgot_password_404.jinja"))
+        rendered_template = template.render()
+        await send_email_mailhog(email, rendered_template, "Onbekend Account")
+        return ResetPasswordRes.EMAIL_404
+
+    reset_pw_token = secrets.token_urlsafe(16)
+    reset_pw_url = f"https://localhost:80/reset-password?token={reset_pw_token}"
+
+    reset_pw_data = {
+        "user_id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+    }
+
+    redis_key = f"password-reset:{reset_pw_token}"
+    await redis_client.setex(redis_key, 15 * 60, json.dumps(reset_pw_data))
+
+    template = cast(Template, templates.get_template("email/forgot_password.jinja"))
+    rendered_template = template.render(
+        first_name=user.first_name,
+        last_name=user.last_name,
+        reset_password_url=reset_pw_url,
+        n_minutes_till_expiry=15,
+    )
+    await send_email_mailhog(user.email, rendered_template, "Nieuw Wachtwoord")
+    return ResetPasswordRes.RESET_PW_EMAIL_SENT
+
+
+ResetPassword: ResetPasswordRes = Depends(reset_password)

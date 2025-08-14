@@ -2,7 +2,12 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from ..database import RedisSession
-from ..dependencies import LoginAttemptRes, RedirectIfAuthenticated, ValidateLogin
+from ..dependencies import (
+    LoginAttemptRes,
+    RedirectIfAuthenticated,
+    ValidateLogin,
+    ResetPassword,
+)
 from ..templates import templates
 
 router = APIRouter()
@@ -17,7 +22,7 @@ async def get_login(request: Request, redirect_result=RedirectIfAuthenticated):
     )
 
 
-@router.post("/login")
+@router.post("/login", response_class=HTMLResponse)
 async def post_login(request: Request, validate_login_result=ValidateLogin):
     match validate_login_result:
         case RedirectResponse():
@@ -60,3 +65,25 @@ async def logout(request: Request, redis_client=RedisSession):
     response.delete_cookie("session_token")
 
     return response
+
+
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def get_forgot_password(request: Request):
+    return templates.TemplateResponse(
+        "pages/forgot-password.jinja",
+        {"request": request, "active_page": "forgot-password"},
+    )
+
+
+@router.post("/forgot-password", response_class=HTMLResponse)
+async def post_forgot_password(request: Request, reset_password=ResetPassword):
+    match reset_password:
+        case _:
+            return templates.TemplateResponse(
+                "pages/forgot-password.jinja",
+                {
+                    "request": request,
+                    "info": "An email with instructions was sent to the supplied email address.",
+                    "active_page": "forgot-password",
+                },
+            )
