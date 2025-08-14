@@ -33,26 +33,14 @@ To drop all database tables:
 poetry run python -m tests.db_utils teardown
 ```
 
-```mermaid
-classDiagram
-    %% Wat zijn de nuances van een aanvraag voor meerdere
-    %% klanten tegelijkertijd?
-    %% Zijn er subsidies bij meerdere aanbieders tegelijkertijd?
-    %% BV: een subsidie die door zowel SNN als RVO wordt gegeven?
-    %% Wordt er wel eens een aanvraag geschreven voor meerdere
-    %% subsidies? Of altijd voor één?
+## Linting and formatting
 
-    CLIENT }|--o{ APPLICATION : has
-    LISTING ||--o{ APPLICATION: has
-    USER }|--o{ CLIENT : has
-    USER }|--o{ LISTING : has
-    PROVIDER ||--o{ LISTING: has
+Check for issues:
+```bash
+poetry run ruff check
+```
 
-    USER_CONTEXT |o--|| USER : has
-    CLIENT_CONTEXT }o--o{ CLIENT : has
-    LISTING_CONTEXT }o--o{ LISTING : has
-    APPLICATION_CONTEXT }o--o{ APPLICATION : has
-    PROVIDER_CONTEXT }o--o{ PROVIDER : has
-    DOCUMENT_SECTION }o--|| APPLICATION: has
-    DOCUMENT_COMMENT }o--|| DOCUMENT_SECTION: has
+Format all python code:
+```bash
+poetry run ruff format
 ```
