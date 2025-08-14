@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -20,6 +21,9 @@ from aanvraagapp.templates import templates
 from aanvraagapp.email import send_email_mailhog
 
 from .. import models
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 # Magic constants
 SESSION_SECRET_KEY = (
@@ -72,6 +76,7 @@ async def validate_login(
     if user is None:
         # Prevent timing attacks
         password_helper.hash(password)
+        logger.info(f"Login attempt failed: email not found for {email}")
         return LoginAttemptRes.EMAIL_404
 
     verified, updated_password_hash = password_helper.verify_and_update(
@@ -79,6 +84,7 @@ async def validate_login(
     )
 
     if not verified:
+        logger.info(f"Login attempt failed: wrong password for {email}")
         return LoginAttemptRes.WRONG_PASSWORD
 
     if updated_password_hash is not None:
@@ -152,12 +158,14 @@ async def validate_session(
 ):
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_token:
+        logger.info("Session validation failed: no token given")
         return ValidateSessionRes.NO_TOKEN_GIVEN
 
     redis_key = f"session:{session_token}"
     session_data_json = await redis_client.get(redis_key)
 
     if not session_data_json:
+        logger.info("Session validation failed: no token found in Redis")
         return ValidateSessionRes.NO_TOKEN_FOUND
 
     try:
@@ -172,11 +180,13 @@ async def validate_session(
 
         if not hmac.compare_digest(stored_signature, expected_signature):
             await redis_client.delete(redis_key)
+            logger.warning("Session validation failed: wrong signature")
             return ValidateSessionRes.WRONG_SIGNATURE
 
         expires_at = datetime.fromisoformat(stored_data["expires_at"])
         if datetime.now(timezone.utc) > expires_at:
             await redis_client.delete(redis_key)
+            logger.info("Session validation failed: token expired")
             return ValidateSessionRes.FOUND_TOKEN_EXPIRED
 
         result = await session.execute(
@@ -186,6 +196,7 @@ async def validate_session(
 
         if not user:
             await redis_client.delete(redis_key)
+            logger.warning(f"Session validation failed: no user found for user_id {stored_data['user_id']}")
             return ValidateSessionRes.NO_USER_FOUND
 
         # Refresh session expiry time
@@ -195,6 +206,7 @@ async def validate_session(
 
     except (json.JSONDecodeError, KeyError, ValueError):
         await redis_client.delete(redis_key)
+        logger.error("Session validation failed: parsing error", exc_info=True)
         return ValidateSessionRes.PARSING_ERROR
 
 
@@ -240,6 +252,7 @@ async def reset_password(
         template = cast(Template, templates.get_template("email/forgot_password_404.jinja"))
         rendered_template = template.render()
         await send_email_mailhog(email, rendered_template, "Onbekend Account")
+        logger.info(f"Password reset attempt failed: email not found for {email}")
         return ResetPasswordRes.EMAIL_404
 
     reset_pw_token = secrets.token_urlsafe(16)
@@ -265,6 +278,7 @@ async def reset_password(
         n_minutes_till_expiry=15,
     )
     await send_email_mailhog(user.email, rendered_template, "Nieuw Wachtwoord")
+    logger.info(f"Password reset email sent for {user.email}")
     return ResetPasswordRes.RESET_PW_EMAIL_SENT
 
 
