@@ -46,13 +46,13 @@ async def post_login(request: Request, validate_login_result=ValidateLogin):
             )
 
 
-@router.get("/register", response_class=HTMLResponse)
-async def register(request: Request, redirect_result=RedirectIfAuthenticated):
-    if redirect_result:
-        return redirect_result
-    return templates.TemplateResponse(
-        "pages/register.jinja", {"request": request, "active_page": "register"}
-    )
+# @router.get("/register", response_class=HTMLResponse)
+# async def register(request: Request, redirect_result=RedirectIfAuthenticated):
+#     if redirect_result:
+#         return redirect_result
+#     return templates.TemplateResponse(
+#         "pages/register.jinja", {"request": request, "active_page": "register"}
+#     )
 
 
 @router.get("/logout")
