@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import json
 import logging
 import secrets
@@ -26,9 +24,6 @@ from .. import models
 logger = logging.getLogger(__name__)
 
 # Magic constants
-SESSION_SECRET_KEY = (
-    "your-super-secret-key-change-in-production"  # TODO: Move to env vars
-)
 SESSION_EXPIRY_HOURS = 24  # TODO: Move to env vars
 SESSION_COOKIE_NAME = "session_token"
 
@@ -117,16 +112,11 @@ async def create_session_and_login(
         ).isoformat(),
     }
 
-    session_data_str = json.dumps(session_data, sort_keys=True)
-    signature = hmac.new(
-        SESSION_SECRET_KEY.encode(), session_data_str.encode(), hashlib.sha256
-    ).hexdigest()
-
     redis_key = f"session:{session_token}"
     await redis_client.setex(
         redis_key,
         SESSION_EXPIRY_HOURS * 3600,  # Convert hours to seconds
-        json.dumps({"data": session_data, "signature": signature}),
+        json.dumps(session_data),
     )
 
     response = RedirectResponse(url="/home", status_code=302)
@@ -146,7 +136,6 @@ class ValidateSessionRes(Enum):
     NO_TOKEN_GIVEN = "no_token_given"
     NO_TOKEN_FOUND = "no_token_found"
     PARSING_ERROR = "parsing_error"
-    WRONG_SIGNATURE = "wrong_signature"
     FOUND_TOKEN_EXPIRED = "found_token_expired"
     NO_USER_FOUND = "no_user_found"
 
@@ -171,34 +160,21 @@ async def validate_session(
 
     try:
         session_data = json.loads(session_data_json)
-        stored_data = session_data["data"]
-        stored_signature = session_data["signature"]
-
-        data_str = json.dumps(stored_data, sort_keys=True)
-        expected_signature = hmac.new(
-            SESSION_SECRET_KEY.encode(), data_str.encode(), hashlib.sha256
-        ).hexdigest()
-
-        if not hmac.compare_digest(stored_signature, expected_signature):
-            await redis_client.delete(redis_key)
-            logger.warning("Session validation failed: wrong signature")
-            return ValidateSessionRes.WRONG_SIGNATURE
-
-        expires_at = datetime.fromisoformat(stored_data["expires_at"])
+        expires_at = datetime.fromisoformat(session_data["expires_at"])
         if datetime.now(timezone.utc) > expires_at:
             await redis_client.delete(redis_key)
             logger.info("Session validation failed: token expired")
             return ValidateSessionRes.FOUND_TOKEN_EXPIRED
 
         result = await session.execute(
-            select(models.User).where(models.User.id == stored_data["user_id"])
+            select(models.User).where(models.User.id == session_data["user_id"])
         )
         user = result.scalar_one_or_none()
 
         if not user:
             await redis_client.delete(redis_key)
             logger.warning(
-                f"Session validation failed: no user found for user_id {stored_data['user_id']}"
+                f"Session validation failed: no user found for user_id {session_data['user_id']}"
             )
             return ValidateSessionRes.NO_USER_FOUND
 
