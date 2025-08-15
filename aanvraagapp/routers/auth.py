@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from ..database import RedisSession
@@ -6,7 +6,9 @@ from ..dependencies import (
     LoginAttemptRes,
     RedirectIfAuthenticated,
     ValidateLogin,
+    ForgotPassword,
     ResetPassword,
+    ResetPasswordRes,
 )
 from ..templates import templates
 
@@ -76,8 +78,8 @@ async def get_forgot_password(request: Request):
 
 
 @router.post("/forgot-password", response_class=HTMLResponse)
-async def post_forgot_password(request: Request, reset_password=ResetPassword):
-    match reset_password:
+async def post_forgot_password(request: Request, forgot_password=ForgotPassword):
+    match forgot_password:
         case _:
             return templates.TemplateResponse(
                 "pages/forgot-password.jinja",
@@ -86,4 +88,30 @@ async def post_forgot_password(request: Request, reset_password=ResetPassword):
                     "info": "An email with instructions was sent to the supplied email address.",
                     "active_page": "forgot-password",
                 },
+            )
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def get_reset_password(request: Request, token: str = Query()):
+    return templates.TemplateResponse(
+        "pages/reset-password.jinja",
+        {"request": request, "token": token}
+    )
+
+@router.post("/reset-password", response_class=HTMLResponse)
+async def post_reset_password(request: Request, reset_password=ResetPassword):
+    match reset_password:
+        case ResetPasswordRes.NO_TOKEN_FOUND | ResetPasswordRes.FOUND_TOKEN_EXPIRED:
+            return templates.TemplateResponse(
+                "pages/reset-password.jinja",
+                {"request": request, "expired": True}
+            )
+        case ResetPasswordRes.NO_USER_FOUND | ResetPasswordRes.PARSING_ERROR:
+            return templates.TemplateResponse(
+                "pages/reset-password.jinja",
+                {"request": request, "error": True}
+            )
+        case ResetPasswordRes.SUCCESS:
+            return templates.TemplateResponse(
+                "pages/reset-password.jinja",
+                {"request": request, "success": True}
             )

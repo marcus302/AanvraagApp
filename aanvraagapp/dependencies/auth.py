@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional, Tuple, Union, cast
 
-from fastapi import Depends, Form, Request
+from fastapi import Depends, Form, Request, Query
 from fastapi.responses import RedirectResponse
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
@@ -143,8 +143,8 @@ async def create_session_and_login(
 
 
 class ValidateSessionRes(Enum):
-    NO_TOKEN_GIVEN = "no_token_found"
-    NO_TOKEN_FOUND = "no_token_found_in_redis"
+    NO_TOKEN_GIVEN = "no_token_given"
+    NO_TOKEN_FOUND = "no_token_found"
     PARSING_ERROR = "parsing_error"
     WRONG_SIGNATURE = "wrong_signature"
     FOUND_TOKEN_EXPIRED = "found_token_expired"
@@ -156,6 +156,7 @@ async def validate_session(
     session: AsyncSession = DBSession,
     redis_client=RedisSession,
 ):
+    # Change to Fastapi's Cookie?
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_token:
         logger.info("Session validation failed: no token given")
@@ -196,7 +197,9 @@ async def validate_session(
 
         if not user:
             await redis_client.delete(redis_key)
-            logger.warning(f"Session validation failed: no user found for user_id {stored_data['user_id']}")
+            logger.warning(
+                f"Session validation failed: no user found for user_id {stored_data['user_id']}"
+            )
             return ValidateSessionRes.NO_USER_FOUND
 
         # Refresh session expiry time
@@ -230,12 +233,12 @@ async def redirect_if_authenticated(
 RedirectIfAuthenticated: RedirectResponse | None = Depends(redirect_if_authenticated)
 
 
-class ResetPasswordRes(Enum):
+class ForgotPasswordRes(Enum):
     EMAIL_404 = "email_404"
-    RESET_PW_EMAIL_SENT = "reset_pw_email_sent"
+    FORGOT_PW_EMAIL_SENT = "forgot_pw_email_sent"
 
 
-async def reset_password(
+async def forgot_password(
     email: EmailStr = Form(),
     session: AsyncSession = DBSession,
     redis_client=RedisSession,
@@ -249,16 +252,18 @@ async def reset_password(
     user = result.scalar_one_or_none()
 
     if user is None:
-        template = cast(Template, templates.get_template("email/forgot_password_404.jinja"))
+        template = cast(
+            Template, templates.get_template("email/forgot_password_404.jinja")
+        )
         rendered_template = template.render()
         await send_email_mailhog(email, rendered_template, "Onbekend Account")
         logger.info(f"Password reset attempt failed: email not found for {email}")
-        return ResetPasswordRes.EMAIL_404
+        return ForgotPasswordRes.EMAIL_404
 
-    reset_pw_token = secrets.token_urlsafe(16)
-    reset_pw_url = f"https://localhost:80/reset-password?token={reset_pw_token}"
+    forgot_pw_token = secrets.token_urlsafe(16)
+    forgot_pw_url = f"https://localhost:80/reset-password?token={forgot_pw_token}"
 
-    reset_pw_data = {
+    forgot_pw_data = {
         "user_id": user.id,
         "email": user.email,
         "first_name": user.first_name,
@@ -267,19 +272,65 @@ async def reset_password(
         "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
     }
 
-    redis_key = f"password-reset:{reset_pw_token}"
-    await redis_client.setex(redis_key, 15 * 60, json.dumps(reset_pw_data))
+    redis_key = f"password-forgot:{forgot_pw_token}"
+    await redis_client.setex(redis_key, 15 * 60, json.dumps(forgot_pw_data))
 
     template = cast(Template, templates.get_template("email/forgot_password.jinja"))
     rendered_template = template.render(
         first_name=user.first_name,
         last_name=user.last_name,
-        reset_password_url=reset_pw_url,
+        reset_password_url=forgot_pw_url,
         n_minutes_till_expiry=15,
     )
     await send_email_mailhog(user.email, rendered_template, "Nieuw Wachtwoord")
     logger.info(f"Password reset email sent for {user.email}")
-    return ResetPasswordRes.RESET_PW_EMAIL_SENT
+    return ForgotPasswordRes.FORGOT_PW_EMAIL_SENT
+
+
+ForgotPassword: ForgotPasswordRes = Depends(forgot_password)
+
+
+class ResetPasswordRes(Enum):
+    NO_TOKEN_FOUND = "no_token_found"
+    PARSING_ERROR = "parsing_error"
+    FOUND_TOKEN_EXPIRED = "found_token_expired"
+    NO_USER_FOUND = "no_user_found"
+    SUCCESS = "success"
+
+
+async def reset_password(
+    token: str = Form(),
+    new_password: str = Form(),
+    session: AsyncSession = DBSession,
+    redis_client=RedisSession,
+):
+    redis_key = f"password-forgot:{token}"
+    forgot_pw_data_json = await redis_client.get(redis_key)
+
+    if not forgot_pw_data_json:
+        return ResetPasswordRes.NO_TOKEN_FOUND
+
+    try:
+        forgot_pw_data = json.loads(forgot_pw_data_json)
+        expires_at = datetime.fromisoformat(forgot_pw_data["expires_at"])
+        if datetime.now(timezone.utc) > expires_at:
+            await redis_client.delete(redis_key)
+            return ResetPasswordRes.FOUND_TOKEN_EXPIRED
+        result = await session.execute(
+            select(models.User).where(models.User.id == forgot_pw_data["user_id"])
+        )
+        user = result.scalar_one_or_none()
+        if not user:
+            await redis_client.delete(redis_key)
+            return ResetPasswordRes.NO_USER_FOUND
+    except (json.JSONDecodeError, KeyError, ValueError):
+        await redis_client.delete(redis_key)
+        return ResetPasswordRes.PARSING_ERROR
+
+    user.hashed_password = password_helper.hash(new_password)
+    session.add(user)
+    await session.commit()
+    return ResetPasswordRes.SUCCESS
 
 
 ResetPassword: ResetPasswordRes = Depends(reset_password)

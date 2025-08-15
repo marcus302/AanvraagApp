@@ -4,8 +4,10 @@ from .auth import (
     ValidateLogin,
     ValidateSession,
     ValidateSessionRes,
+    ForgotPassword,
+    ForgotPasswordRes,
     ResetPassword,
-    ResetPasswordRes,
+    ResetPasswordRes
 )
 
 __all__ = [
@@ -14,6 +16,8 @@ __all__ = [
     "ValidateLogin",
     "ValidateSession",
     "ValidateSessionRes",
+    "ForgotPassword",
+    "ForgotPasswordRes",
     "ResetPassword",
     "ResetPasswordRes",
 ]
