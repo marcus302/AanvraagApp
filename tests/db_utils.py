@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from aanvraagapp import models
-from aanvraagapp.controllers.auth import password_helper
+from aanvraagapp.dependencies.auth import password_helper
 
 
 async def delete_tables():
