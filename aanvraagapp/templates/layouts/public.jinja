@@ -1,27 +1,27 @@
 {% extends "base.jinja" %}
 
 {% block body %}
-    <header class="header header-public">
-        <div class="header-content">
+    <header class="fixed top-0 left-0 right-0 h-18 bg-bg-primary/85 backdrop-blur-xl border-b border-border z-50 flex items-center px-8 shadow-lg">
+        <div class="w-full max-w-7xl mx-auto flex items-center justify-between">
             <div class="logo">
-                <h1>AanvraagApp</h1>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-accent to-accent-secondary bg-clip-text text-transparent">AanvraagApp</h1>
             </div>
             <nav>
-                <ul class="nav-menu">
-                    <li class="nav-item {% if active_page == 'login' %}active{% endif %}">
-                        <a href="/login">Login</a>
+                <ul class="flex gap-4">
+                    <li class="px-6 py-3 rounded-xl font-medium tracking-wide relative overflow-hidden transition-all duration-300 {% if active_page == 'login' %}bg-accent/10 border border-accent text-accent{% else %}hover:border-accent hover:bg-accent/5{% endif %}">
+                        <a href="/login" class="relative z-10">Login</a>
                     </li>
-                    {# <li class="nav-item {% if active_page == 'register' %}active{% endif %}">
-                        <a href="/register">Sign Up</a>
+                    {# <li class="px-6 py-3 rounded-xl font-medium tracking-wide relative overflow-hidden transition-all duration-300 {% if active_page == 'register' %}bg-accent/10 border border-accent text-accent{% else %}hover:border-accent hover:bg-accent/5{% endif %}">
+                        <a href="/register" class="relative z-10">Sign Up</a>
                     </li> #}
-                    <li class="nav-item {% if active_page == 'forgot-password' %}active{% endif %}">
-                        <a href="/forgot-password">Forgot Password?</a>
+                    <li class="px-6 py-3 rounded-xl font-medium tracking-wide relative overflow-hidden transition-all duration-300 {% if active_page == 'forgot-password' %}bg-accent/10 border border-accent text-accent{% else %}hover:border-accent hover:bg-accent/5{% endif %}">
+                        <a href="/forgot-password" class="relative z-10">Forgot Password?</a>
                     </li>
                 </ul>
             </nav>
         </div>
     </header>
-    <main class="main-container">
+    <main class="mt-18 px-8 max-w-7xl mx-auto">
         <div id="content-area">
             {% block content %}
                 <!-- Page-specific content goes here -->

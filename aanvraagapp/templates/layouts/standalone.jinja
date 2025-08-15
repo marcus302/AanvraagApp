@@ -1,14 +1,14 @@
 {% extends "base.jinja" %}
 
 {% block body %}
-    <header class="header header-public">
-        <div class="header-content">
+    <header class="fixed top-0 left-0 right-0 h-18 bg-bg-primary/85 backdrop-blur-xl border-b border-border z-50 flex items-center px-8 shadow-lg">
+        <div class="w-full max-w-7xl mx-auto flex items-center justify-between">
             <div class="logo">
-                <h1>AanvraagApp</h1>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-accent to-accent-secondary bg-clip-text text-transparent">AanvraagApp</h1>
             </div>
         </div>
     </header>
-    <main class="main-container">
+    <main class="mt-18 px-8 max-w-7xl mx-auto">
         <div id="content-area">
             {% block content %}
                 <!-- Page-specific content goes here -->

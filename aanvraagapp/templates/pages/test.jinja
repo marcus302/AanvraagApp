@@ -3,93 +3,100 @@
 {% block title %}Listings - {{ super() }}{% endblock %}
 
 {% block content %}
-    <div class="content-header">
-        <h1 class="content-title">Listings</h1>
-        <p class="content-subtitle">Manage and monitor active job listings</p>
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-accent to-accent-secondary bg-clip-text text-transparent mb-2">Listings</h1>
+        <p class="text-text-secondary text-lg">Manage and monitor active job listings</p>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card" style="animation-delay: 0.1s;">
-            <div class="stat-label">Total Listings</div>
-            <div class="stat-value">247</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent relative overflow-hidden group">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent to-accent-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div class="text-text-secondary text-sm uppercase tracking-wider mb-2">Total Listings</div>
+            <div class="text-3xl font-bold text-text-primary">247</div>
         </div>
-        <div class="stat-card" style="animation-delay: 0.2s;">
-            <div class="stat-label">Active</div>
-            <div class="stat-value">183</div>
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent relative overflow-hidden group">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent to-accent-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div class="text-text-secondary text-sm uppercase tracking-wider mb-2">Active</div>
+            <div class="text-3xl font-bold text-text-primary">183</div>
         </div>
-        <div class="stat-card" style="animation-delay: 0.3s;">
-            <div class="stat-label">Applications</div>
-            <div class="stat-value">1,842</div>
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent relative overflow-hidden group">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent to-accent-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div class="text-text-secondary text-sm uppercase tracking-wider mb-2">Applications</div>
+            <div class="text-3xl font-bold text-text-primary">1,842</div>
         </div>
-        <div class="stat-card" style="animation-delay: 0.4s;">
-            <div class="stat-label">Avg. Response Time</div>
-            <div class="stat-value">2.4d</div>
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent relative overflow-hidden group">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent to-accent-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div class="text-text-secondary text-sm uppercase tracking-wider mb-2">Avg. Response Time</div>
+            <div class="text-3xl font-bold text-text-primary">2.4d</div>
         </div>
     </div>
 
-    <div class="data-grid">
-        <div class="data-card">
-            <div class="data-card-header">
-                <h3 class="data-card-title">Senior Full Stack Developer</h3>
-                <span class="data-card-badge">Active</span>
+    <div class="space-y-6">
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:translate-x-1 hover:shadow-xl hover:border-accent cursor-pointer relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <h3 class="text-xl font-semibold text-text-primary">Senior Full Stack Developer</h3>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent">Active</span>
             </div>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">TechCorp Solutions • Remote • $120k-150k</p>
-            <div class="data-card-meta">
-                <div class="meta-item">
-                    <span class="meta-label">Provider</span>
-                    <span class="meta-value">GlobalTech Inc.</span>
+            <p class="text-text-secondary mb-4 relative z-10">TechCorp Solutions • Remote • $120k-150k</p>
+            <div class="flex gap-8 pt-4 border-t border-border relative z-10">
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Provider</span>
+                    <span class="text-text-primary font-medium mt-1">GlobalTech Inc.</span>
                 </div>
-                <div class="meta-item">
-                    <span class="meta-label">Applications</span>
-                    <span class="meta-value">47</span>
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Applications</span>
+                    <span class="text-text-primary font-medium mt-1">47</span>
                 </div>
-                <div class="meta-item">
-                    <span class="meta-label">Posted</span>
-                    <span class="meta-value">3 days ago</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="data-card">
-            <div class="data-card-header">
-                <h3 class="data-card-title">Product Manager</h3>
-                <span class="data-card-badge">Active</span>
-            </div>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Innovation Labs • San Francisco, CA • $140k-180k</p>
-            <div class="data-card-meta">
-                <div class="meta-item">
-                    <span class="meta-label">Provider</span>
-                    <span class="meta-value">StartupVentures</span>
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">Applications</span>
-                    <span class="meta-value">92</span>
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">Posted</span>
-                    <span class="meta-value">1 week ago</span>
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Posted</span>
+                    <span class="text-text-primary font-medium mt-1">3 days ago</span>
                 </div>
             </div>
         </div>
 
-        <div class="data-card">
-            <div class="data-card-header">
-                <h3 class="data-card-title">UX/UI Designer</h3>
-                <span class="data-card-badge">Active</span>
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:translate-x-1 hover:shadow-xl hover:border-accent cursor-pointer relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <h3 class="text-xl font-semibold text-text-primary">Product Manager</h3>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent">Active</span>
             </div>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Creative Studio • New York, NY • $90k-120k</p>
-            <div class="data-card-meta">
-                <div class="meta-item">
-                    <span class="meta-label">Provider</span>
-                    <span class="meta-value">DesignHub Pro</span>
+            <p class="text-text-secondary mb-4 relative z-10">Innovation Labs • San Francisco, CA • $140k-180k</p>
+            <div class="flex gap-8 pt-4 border-t border-border relative z-10">
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Provider</span>
+                    <span class="text-text-primary font-medium mt-1">StartupVentures</span>
                 </div>
-                <div class="meta-item">
-                    <span class="meta-label">Applications</span>
-                    <span class="meta-value">156</span>
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Applications</span>
+                    <span class="text-text-primary font-medium mt-1">92</span>
                 </div>
-                <div class="meta-item">
-                    <span class="meta-label">Posted</span>
-                    <span class="meta-value">5 days ago</span>
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Posted</span>
+                    <span class="text-text-primary font-medium mt-1">1 week ago</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-bg-card backdrop-blur-sm border border-border rounded-2xl p-6 transition-all duration-300 hover:translate-x-1 hover:shadow-xl hover:border-accent cursor-pointer relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <h3 class="text-xl font-semibold text-text-primary">UX/UI Designer</h3>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent">Active</span>
+            </div>
+            <p class="text-text-secondary mb-4 relative z-10">Creative Studio • New York, NY • $90k-120k</p>
+            <div class="flex gap-8 pt-4 border-t border-border relative z-10">
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Provider</span>
+                    <span class="text-text-primary font-medium mt-1">DesignHub Pro</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Applications</span>
+                    <span class="text-text-primary font-medium mt-1">156</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-text-secondary text-xs uppercase tracking-wider">Posted</span>
+                    <span class="text-text-primary font-medium mt-1">5 days ago</span>
                 </div>
             </div>
         </div>

@@ -4,9 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AanvraagApp{% endblock %}</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-primary': '#0a0e27',
+                        'bg-secondary': '#151932',
+                        'bg-card': 'rgba(30, 35, 60, 0.5)',
+                        'text-primary': '#e4e6eb',
+                        'text-secondary': '#8892b0',
+                        'accent': '#64ffda',
+                        'accent-secondary': '#5a3eff',
+                        'border': 'rgba(100, 255, 218, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
+<body class="bg-bg-primary text-text-primary font-sans min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary">
     {% block body %}
         <!-- Default body structure, can be completely overridden -->
     {% endblock %}

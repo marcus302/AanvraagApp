@@ -3,28 +3,38 @@
 {% block title %}Register - {{ super() }}{% endblock %}
 
 {% block content %}
-    <div class="content-header">
-        <h1 class="content-title">Register</h1>
-        <p class="content-subtitle">Register your own account</p>
-    </div>
-    
-    <form method="post" action="/register">
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md">
+            <div class="mb-8 text-center">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-accent to-accent-secondary bg-clip-text text-transparent mb-2">Register</h1>
+                <p class="text-text-secondary text-lg">Register your own account</p>
+            </div>
+            
+            <form method="post" action="/register" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-text-primary font-medium mb-2">Email:</label>
+                    <input type="email" id="email" name="email" required 
+                           class="w-full px-4 py-3 bg-bg-card border border-border rounded-xl text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent transition-colors">
+                </div>
+                <div>
+                    <label for="password" class="block text-text-primary font-medium mb-2">Password:</label>
+                    <input type="password" id="password" name="password" required 
+                           class="w-full px-4 py-3 bg-bg-card border border-border rounded-xl text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent transition-colors">
+                </div>
+                <div>
+                    <label for="password-repeat" class="block text-text-primary font-medium mb-2">Repeat Your Password:</label>
+                    <input type="password" id="password-repeat" name="password-repeat" required 
+                           class="w-full px-4 py-3 bg-bg-card border border-border rounded-xl text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent transition-colors">
+                </div>
+                <button type="submit" 
+                        class="w-full px-6 py-3 bg-gradient-to-r from-accent to-accent-secondary text-bg-primary font-medium rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+                    Register
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-text-secondary">Already have an account? <a href="/login" class="text-accent hover:underline">Login here</a></p>
+            </div>
         </div>
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <div>
-            <label for="password-repeat">Repeat Your Password:</label>
-            <input type="password" id="password-repeat" name="password-repeat" required>
-        </div>
-        <button type="submit">Register</button>
-    </form>
-    
-    <div style="margin-top: 1rem;">
-        <p>Already have an account? <a href="/login">Login here</a></p>
     </div>
 {% endblock %}
