@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional, Tuple, Union, cast
 
-from fastapi import Depends, Form, Request, Query
+from fastapi import Depends, Form, Request, Cookie
 from fastapi.responses import RedirectResponse
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
@@ -145,7 +145,10 @@ async def validate_session(
     session: AsyncSession = DBSession,
     redis_client=RedisSession,
 ):
-    # Change to Fastapi's Cookie?
+    # Were are getting the cookie from request manually this way,
+    # so that FastAPI does not consider it to be an obligatory dependency
+    # for all routes that (indirectly) use this, such as through
+    # redirect_if_authenticated.
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     if not session_token:
         logger.info("Session validation failed: no token given")
@@ -185,13 +188,12 @@ async def validate_session(
 
     except (json.JSONDecodeError, KeyError, ValueError):
         await redis_client.delete(redis_key)
-        logger.error("Session validation failed: parsing error", exc_info=True)
+        logger.error("Session validation failed: parsing error", exzc_info=True)
         return ValidateSessionRes.PARSING_ERROR
 
 
 ValidateLogin: (
     RedirectResponse
-    | tuple[LoginAttemptRes, EmailStr, str]
     | tuple[LoginAttemptRes, EmailStr, str]
 ) = Depends(create_session_and_login)
 ValidateSession: models.User | ValidateSessionRes = Depends(validate_session)
