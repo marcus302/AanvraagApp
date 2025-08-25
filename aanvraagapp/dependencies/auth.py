@@ -110,6 +110,7 @@ async def create_session_and_login(
         "expires_at": (
             datetime.now(timezone.utc) + timedelta(hours=SESSION_EXPIRY_HOURS)
         ).isoformat(),
+        "csrf": secrets.token_urlsafe(32)
     }
 
     redis_key = f"session:{session_token}"
@@ -132,8 +133,42 @@ async def create_session_and_login(
     return response
 
 
-class ValidateSessionRes(Enum):
+ValidateLogin: (
+    RedirectResponse
+    | tuple[LoginAttemptRes, EmailStr, str]
+) = Depends(create_session_and_login)
+
+
+class GetSessionFromRedisRes(Enum):
     NO_TOKEN_GIVEN = "no_token_given"
+    NO_TOKEN_FOUND = "no_token_found"
+
+
+async def get_session_and_key_from_redis(request: Request, redis_client=RedisSession):
+    # Were are getting the cookie from request manually this way,
+    # so that FastAPI does not consider it to be an obligatory dependency
+    # for all dependencies that (indirectly) use this, such as through
+    # redirect_if_authenticated.
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token:
+        logger.info("Session validation failed: no token given")
+        return GetSessionFromRedisRes.NO_TOKEN_GIVEN
+
+    redis_key = f"session:{session_token}"
+    session_data = await json.loads(redis_client.get(redis_key))
+
+    if not session_data:
+        logger.info("Session validation failed: no token found in Redis")
+        return GetSessionFromRedisRes.NO_TOKEN_FOUND
+
+    # TODO: Fix typing issues with this object more elegantly.   
+    return cast(dict[str, str], session_data), redis_key
+
+
+GetSessionFromRedis: tuple[dict[str, str], str] | GetSessionFromRedisRes = Depends(get_session_and_key_from_redis)
+
+
+class ValidateSessionRes(Enum):
     NO_TOKEN_FOUND = "no_token_found"
     PARSING_ERROR = "parsing_error"
     FOUND_TOKEN_EXPIRED = "found_token_expired"
@@ -141,28 +176,16 @@ class ValidateSessionRes(Enum):
 
 
 async def validate_session(
-    request: Request,
     session: AsyncSession = DBSession,
+    session_and_key=GetSessionFromRedis,
     redis_client=RedisSession,
 ):
-    # Were are getting the cookie from request manually this way,
-    # so that FastAPI does not consider it to be an obligatory dependency
-    # for all routes that (indirectly) use this, such as through
-    # redirect_if_authenticated.
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    if not session_token:
-        logger.info("Session validation failed: no token given")
-        return ValidateSessionRes.NO_TOKEN_GIVEN
-
-    redis_key = f"session:{session_token}"
-    session_data_json = await redis_client.get(redis_key)
-
-    if not session_data_json:
-        logger.info("Session validation failed: no token found in Redis")
+    if isinstance(session_and_key, GetSessionFromRedisRes):
         return ValidateSessionRes.NO_TOKEN_FOUND
 
+    session_data, redis_key = session_and_key
+
     try:
-        session_data = json.loads(session_data_json)
         expires_at = datetime.fromisoformat(session_data["expires_at"])
         if datetime.now(timezone.utc) > expires_at:
             await redis_client.delete(redis_key)
@@ -192,10 +215,6 @@ async def validate_session(
         return ValidateSessionRes.PARSING_ERROR
 
 
-ValidateLogin: (
-    RedirectResponse
-    | tuple[LoginAttemptRes, EmailStr, str]
-) = Depends(create_session_and_login)
 ValidateSession: models.User | ValidateSessionRes = Depends(validate_session)
 
 
@@ -209,6 +228,30 @@ async def redirect_if_authenticated(
 
 
 RedirectIfAuthenticated: RedirectResponse | None = Depends(redirect_if_authenticated)
+
+
+class ValidateCSRFRes(Enum):
+    NO_TOKEN_FOUND = "no_token_found"
+    ERROR = "error"
+    VALID = "valid"
+
+
+async def validate_csrf(
+    csrf: str = Form(),
+    session_and_key=GetSessionFromRedis,
+):
+    if isinstance(session_and_key, GetSessionFromRedisRes):
+        logger.info("CSRF validation failed: no session token found")
+        return ValidateCSRFRes.NO_TOKEN_FOUND
+    
+    session_data, _ = session_and_key
+
+    if secrets.compare_digest(csrf, session_data["csrf"]):
+        logger.info("CSRF validation successful")
+        return ValidateCSRFRes.VALID
+    
+    logger.warning("CSRF validation failed: token mismatch")
+    return ValidateCSRFRes.ERROR
 
 
 class ForgotPasswordRes(Enum):
@@ -238,7 +281,7 @@ async def forgot_password(
         logger.info(f"Password reset attempt failed: email not found for {email}")
         return ForgotPasswordRes.EMAIL_404
 
-    forgot_pw_token = secrets.token_urlsafe(16)
+    forgot_pw_token = secrets.token_urlsafe(32)
     forgot_pw_url = f"https://localhost:80/reset-password?token={forgot_pw_token}"
 
     forgot_pw_data = {
