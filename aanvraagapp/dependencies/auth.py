@@ -286,6 +286,7 @@ async def reset_password(
     forgot_pw_data_json = await redis_client.get(redis_key)
 
     if not forgot_pw_data_json:
+        logger.info(f"Password reset attempt failed: no token found for token {token}")
         return ResetPasswordRes.NO_TOKEN_FOUND
 
     try:
@@ -293,6 +294,7 @@ async def reset_password(
         expires_at = datetime.fromisoformat(forgot_pw_data["expires_at"])
         if datetime.now(timezone.utc) > expires_at:
             await redis_client.delete(redis_key)
+            logger.info(f"Password reset attempt failed: token expired for token {token}")
             return ResetPasswordRes.FOUND_TOKEN_EXPIRED
         result = await session.execute(
             select(models.User).where(models.User.id == forgot_pw_data["user_id"])
@@ -300,14 +302,19 @@ async def reset_password(
         user = result.scalar_one_or_none()
         if not user:
             await redis_client.delete(redis_key)
+            logger.error(
+                f"Password reset attempt failed: no user found for user_id {forgot_pw_data['user_id']}"
+            )
             return ResetPasswordRes.NO_USER_FOUND
     except (json.JSONDecodeError, KeyError, ValueError):
         await redis_client.delete(redis_key)
+        logger.error("Password reset attempt failed: parsing error", exc_info=True)
         return ResetPasswordRes.PARSING_ERROR
 
     user.hashed_password = password_helper.hash(new_password)
     session.add(user)
     await session.commit()
+    logger.info(f"Password reset successful for user {user.email}")
     return ResetPasswordRes.SUCCESS
 
 
