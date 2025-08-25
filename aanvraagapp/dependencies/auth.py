@@ -155,7 +155,7 @@ async def get_session_and_key_from_redis(request: Request, redis_client=RedisSes
         return GetSessionFromRedisRes.NO_TOKEN_GIVEN
 
     redis_key = f"session:{session_token}"
-    session_data = await json.loads(redis_client.get(redis_key))
+    session_data = json.loads(await redis_client.get(redis_key))
 
     if not session_data:
         logger.info("Session validation failed: no token found in Redis")

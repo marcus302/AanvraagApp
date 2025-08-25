@@ -12,7 +12,7 @@ REDIS_URI = "redis://redis:6379/0"
 # Create async engine and session maker
 async_engine = create_async_engine(
     DATABASE_URI,
-    echo=True,  # Set to False in production
+    # echo=True,  # Set to False in production
     future=True,
 )
 
