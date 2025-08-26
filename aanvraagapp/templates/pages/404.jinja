@@ -1,0 +1,27 @@
+{% extends "layouts/authenticated.jinja" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center">
+    <div class="mb-8">
+        <div class="w-24 h-24 mx-auto mb-6 bg-blue-500/10 rounded-full flex items-center justify-center">
+            <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33"/>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-text-primary mb-4">404 Not Found</h1>
+        <p class="text-text-secondary text-lg mb-8">The resource you're looking for doesn't exist.</p>
+    </div>
+
+    <div class="space-y-4">
+        <a href="/clients" class="inline-flex items-center px-6 py-3 bg-accent text-bg-primary font-medium rounded-lg hover:bg-accent/90 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Clients
+        </a>
+        <div>
+            <a href="/" class="text-accent hover:text-accent/80 transition-colors">Go to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

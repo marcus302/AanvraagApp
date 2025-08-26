@@ -1,0 +1,27 @@
+{% extends "layouts/authenticated.jinja" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center">
+    <div class="mb-8">
+        <div class="w-24 h-24 mx-auto mb-6 bg-red-500/10 rounded-full flex items-center justify-center">
+            <svg class="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-text-primary mb-4">403 Forbidden</h1>
+        <p class="text-text-secondary text-lg mb-8">You don't have permission to access this resource.</p>
+    </div>
+
+    <div class="space-y-4">
+        <a href="/clients" class="inline-flex items-center px-6 py-3 bg-accent text-bg-primary font-medium rounded-lg hover:bg-accent/90 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Clients
+        </a>
+        <div>
+            <a href="/" class="text-accent hover:text-accent/80 transition-colors">Go to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -254,6 +254,27 @@ async def validate_csrf(
     return ValidateCSRFRes.ERROR
 
 
+ValidateCSRF: ValidateCSRFRes = Depends(validate_csrf)
+
+
+class RetrieveCSRFRes(Enum):
+    NO_TOKEN_FOUND = "no_token_found"
+
+
+async def get_csrf(
+    session_and_key=GetSessionFromRedis,
+):
+    if isinstance(session_and_key, GetSessionFromRedisRes):
+        logger.info("CSRF token retrieval failed: no session token found")
+        return RetrieveCSRFRes.NO_TOKEN_FOUND
+    
+    session_data, _ = session_and_key
+    return session_data["csrf"]
+
+
+RetrieveCSRF: str | RetrieveCSRFRes = Depends(get_csrf)
+
+
 class ForgotPasswordRes(Enum):
     EMAIL_404 = "email_404"
     FORGOT_PW_EMAIL_SENT = "forgot_pw_email_sent"

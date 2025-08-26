@@ -122,6 +122,7 @@ class User(TimestampMixin, Base):
 
 class Client(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
+    website: Mapped[str] = mapped_column(String, nullable=False)
 
     users: Mapped[List["User"]] = relationship(
         secondary=user_client_association, back_populates="clients", lazy="select"
