@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .routers import auth_router, home_router, client_router
+from .routers import auth_router, home_router, client_router, provider_router
 
 # Configure logging to output to stdout/stderr for Docker
 logging.basicConfig(
@@ -30,3 +30,4 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(home_router)
 app.include_router(client_router)
+app.include_router(provider_router)
