@@ -179,6 +179,7 @@ class Listing(TimestampMixin, Base):
 
 class Provider(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
+    website: Mapped[str] = mapped_column(String, nullable=False)
 
     listings: Mapped[List["Listing"]] = relationship(
         back_populates="provider", lazy="select"

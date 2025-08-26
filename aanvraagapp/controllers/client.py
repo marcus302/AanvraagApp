@@ -17,7 +17,7 @@ async def get_clients(deps=BasicDeps):
     clients = await deps.user.awaitable_attrs.clients
 
     return templates.TemplateResponse(
-        "pages/clients.jinja",
+        "pages/client/clients.jinja",
         {
             "request": deps.request,
             "current_user": deps.user,
@@ -32,7 +32,7 @@ async def get_new_client(deps=BasicDeps, csrf=RetrieveCSRF):
         return RedirectResponse(url="/login", status_code=302)
 
     return templates.TemplateResponse(
-        "pages/new-client.jinja",
+        "pages/client/new-client.jinja",
         {
             "request": deps.request,
             "current_user": deps.user,
@@ -60,7 +60,7 @@ async def post_new_client(deps=BasicDeps, csrf=ValidateCSRF, website: str = Form
         HttpUrl(website)
     except ValidationError:
         return templates.TemplateResponse(
-            "pages/new-client.jinja",
+            "pages/client/new-client.jinja",
             {
                 "request": deps.request,
                 "current_user": deps.user,
@@ -129,7 +129,7 @@ async def get_client_detail(client_id: int, deps=BasicDeps):
             )
 
     return templates.TemplateResponse(
-        "/pages/client-detail.jinja",
+        "/pages/client/client-detail.jinja",
         {
             "request": deps.request,
             "current_user": deps.user,
