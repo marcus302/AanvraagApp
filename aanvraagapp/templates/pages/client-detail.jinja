@@ -5,7 +5,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center">
-            <a href="/clients" class="inline-flex items-center text-text-secondary hover:text-accent transition-colors mr-6">
+            <a href="{{ url_for('get_clients_page') }}" class="inline-flex items-center text-text-secondary hover:text-accent transition-colors mr-6">
                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="flex items-center space-x-3">
-            <a href="/clients/new" class="inline-flex items-center px-4 py-2 bg-accent text-bg-primary font-medium rounded-lg hover:bg-accent/90 transition-colors duration-200">
+            <a href="{{ url_for('get_new_client_page') }}" class="inline-flex items-center px-4 py-2 bg-accent text-bg-primary font-medium rounded-lg hover:bg-accent/90 transition-colors duration-200">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -116,13 +116,13 @@
             <div class="bg-bg-card border border-border rounded-xl p-6">
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Quick Actions</h3>
                 <div class="space-y-3">
-                    <a href="/clients/new" class="w-full flex items-center px-4 py-3 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-colors">
+                    <a href="{{ url_for('get_new_client_page') }}" class="w-full flex items-center px-4 py-3 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         Add New Client
                     </a>
-                    <a href="/clients" class="w-full flex items-center px-4 py-3 bg-bg-secondary text-text-primary rounded-lg hover:bg-accent/10 hover:text-accent transition-colors">
+                    <a href="{{ url_for('get_clients_page') }}" class="w-full flex items-center px-4 py-3 bg-bg-secondary text-text-primary rounded-lg hover:bg-accent/10 hover:text-accent transition-colors">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                         </svg>

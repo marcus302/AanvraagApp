@@ -14,7 +14,7 @@
                     <span class="text-text-primary font-medium text-sm">{{ current_user.first_name }}</span>
                 </div>
                 <div id="userDropdown" class="absolute top-full left-0 mt-2 bg-white border border-gray-300 rounded shadow-lg min-w-32 hidden">
-                    <a href="/logout" class="block px-4 py-2 text-gray-700 no-underline hover:bg-gray-100">
+                    <a href="{{ url_for('get_logout') }}" class="block px-4 py-2 text-gray-700 no-underline hover:bg-gray-100">
                         Logout
                     </a>
                 </div>
@@ -37,7 +37,7 @@
             <nav>
                 <ul class="flex gap-4">
                     <li class="px-6 py-3 rounded-xl font-medium tracking-wide relative overflow-hidden transition-all duration-300 {% if active_page == 'clients' %}bg-accent/10 border border-accent text-accent{% else %}hover:border-accent hover:bg-accent/5{% endif %}">
-                        <a href="/clients" class="relative z-10">Clients</a>
+                        <a href="{{ url_for('get_clients_page') }}" class="relative z-10">Clients</a>
                     </li>
                     <li class="px-6 py-3 rounded-xl font-medium tracking-wide relative overflow-hidden transition-all duration-300 {% if active_page == 'listings' %}bg-accent/10 border border-accent text-accent{% else %}hover:border-accent hover:bg-accent/5{% endif %}">
                         <a href="/listings" class="relative z-10">Listings</a>

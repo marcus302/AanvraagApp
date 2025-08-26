@@ -56,7 +56,7 @@ async def post_login(request: Request, validate_login_result=ValidateLogin):
 
 
 @router.get("/logout")
-async def logout(request: Request, redis_client=RedisSession):
+async def get_logout(request: Request, redis_client=RedisSession):
     session_token = request.cookies.get("session_token")
 
     if session_token:

@@ -109,6 +109,9 @@ async def get_client_detail(client_id: int, deps=BasicDeps):
                     "request": deps.request,
                     "current_user": deps.user,
                     "active_page": "clients",
+                    "return_url_for": "get_clients_page",
+                    "return_url_for_params": {},
+                    "return_message": "Go back to clients.",
                 },
             )
         else:
@@ -119,6 +122,9 @@ async def get_client_detail(client_id: int, deps=BasicDeps):
                     "request": deps.request,
                     "current_user": deps.user,
                     "active_page": "clients",
+                    "return_url_for": "get_clients_page",
+                    "return_url_for_params": {},
+                    "return_message": "Go back to clients.",
                 },
             )
 

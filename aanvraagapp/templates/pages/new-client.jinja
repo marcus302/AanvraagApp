@@ -5,7 +5,7 @@
     <!-- Header -->
     <div class="mb-8">
         <div class="flex items-center mb-4">
-            <a href="/clients" class="inline-flex items-center text-text-secondary hover:text-accent transition-colors mr-4">
+            <a href="{{ url_for('get_clients_page') }}" class="inline-flex items-center text-text-secondary hover:text-accent transition-colors mr-4">
                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -29,7 +29,7 @@
         </div>
         {% endif %}
 
-        <form method="POST" action="/clients/new" class="space-y-6" id="newClientForm">
+        <form method="POST" action="{{ url_for('post_new_client') }}" class="space-y-6" id="newClientForm">
             <input type="hidden" name="csrf" value="{{ csrf_token }}">
             
             <div>
@@ -74,7 +74,7 @@
             </div>
 
             <div class="flex items-center justify-between pt-6 border-t border-border">
-                <a href="/clients" class="px-6 py-3 text-text-secondary hover:text-text-primary transition-colors">
+                <a href="{{ url_for('get_clients_page') }}" class="px-6 py-3 text-text-secondary hover:text-text-primary transition-colors">
                     Cancel
                 </a>
                 <button 

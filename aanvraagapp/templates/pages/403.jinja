@@ -13,15 +13,15 @@
     </div>
 
     <div class="space-y-4">
-        <a href="/clients" class="inline-flex items-center px-6 py-3 bg-accent text-bg-primary font-medium rounded-lg hover:bg-accent/90 transition-colors">
+        <a href="{{ url_for(return_url_for, **return_url_for_params) }}" class="inline-flex items-center px-6 py-3 bg-accent text-bg-primary font-medium rounded-lg hover:bg-accent/90 transition-colors">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            Back to Clients
+            {{ return_message }}
         </a>
         <div>
-            <a href="/" class="text-accent hover:text-accent/80 transition-colors">Go to Home</a>
+            <a href="{{ url_for('get_home_page') }}" class="text-accent hover:text-accent/80 transition-colors">Go to Home</a>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
