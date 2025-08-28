@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, types
+from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
+from pgvector.sqlalchemy import Vector
+from numpy.typing import NDArray
+import numpy as np
 
 # Smart base class that automatically sets a table name that works
 # 95% of the time: User -> user, UserEvent -> user_event
@@ -26,13 +29,10 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+        types.DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False,
+        types.DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
 
@@ -201,6 +201,7 @@ class UserContext(TimestampMixin, Base):
 class ClientContext(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     content: Mapped[str] = mapped_column(String, nullable=False)
+    v: Mapped[NDArray[np.float32]] = mapped_column(Vector(8))
     clients: Mapped[List["Client"]] = relationship(
         secondary=client_context_association,
         back_populates="client_contexts",

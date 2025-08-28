@@ -36,8 +36,10 @@ async def parse_website_background_task(client_id: int, website_url: str):
                 raise ValueError("Cannot parse website for non existing client.")
 
             for md_content in md_contents:
+                import random
                 client_context = models.ClientContext(
                     content=md_content,
+                    v=[random.randint(1, 100) for _ in range(8)],
                     clients=[client]
                 )
                 session.add(client_context)
