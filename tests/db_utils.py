@@ -9,7 +9,7 @@ from aanvraagapp.dependencies.auth import password_helper
 
 async def delete_tables():
     """Delete all tables from the database - for testing only"""
-    engine = create_async_engine("sqlite+aiosqlite:///./aanvraagapp.db")
+    engine = create_async_engine("postgresql+asyncpg://mark:mark@db:5432/mark")
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.drop_all)
     await engine.dispose()
@@ -17,7 +17,7 @@ async def delete_tables():
 
 async def create_db_and_tables():
     """Create all tables in the database - for testing only"""
-    engine = create_async_engine("sqlite+aiosqlite:///./aanvraagapp.db")
+    engine = create_async_engine("postgresql+asyncpg://mark:mark@db:5432/mark")
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
     await engine.dispose()
@@ -25,7 +25,7 @@ async def create_db_and_tables():
 
 async def create_dummy_users():
     """Create dummy users with properly hashed passwords using plain SQL - for testing only"""
-    engine = create_async_engine("sqlite+aiosqlite:///./aanvraagapp.db")
+    engine = create_async_engine("postgresql+asyncpg://mark:mark@db:5432/mark")
 
     # Create dummy user data with hashed passwords
     dummy_users = [
@@ -53,7 +53,7 @@ async def create_dummy_users():
         for user_data in dummy_users:
             await conn.execute(
                 text(
-                    "INSERT INTO user (first_name, last_name, email, hashed_password, created_at, updated_at) VALUES (:first_name, :last_name, :email, :hashed_password, datetime('now'), datetime('now'))"
+                    'INSERT INTO "user" (first_name, last_name, email, hashed_password, created_at, updated_at) VALUES (:first_name, :last_name, :email, :hashed_password, NOW(), NOW())'
                 ),
                 user_data,
             )

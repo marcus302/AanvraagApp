@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from contextlib import asynccontextmanager
 
 
-DATABASE_URI = "sqlite+aiosqlite:///./aanvraagapp.db"
+# DATABASE_URI = "sqlite+aiosqlite:///./aanvraagapp.db"
+DATABASE_URI = "postgresql+asyncpg://mark:mark@db:5432/mark"
 REDIS_URI = "redis://redis:6379/0"
 
 # Create async engine and session maker
