@@ -1,4 +1,4 @@
-from fastapi import Form
+from fastapi import Form, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from pydantic import HttpUrl, ValidationError
@@ -8,6 +8,44 @@ from aanvraagapp.dependencies.auth import ValidateCSRFRes
 from .. import models
 from ..dependencies import ValidateCSRF, BasicDeps, RetrieveCSRF
 from ..templates import templates
+from ..parsing.website import extract_website_hierarchy
+from ..database import DBSessionContext
+
+
+async def parse_website_background_task(client_id: int, website_url: str):
+    """
+    Background task to parse website hierarchy for a newly created client.
+    This runs asynchronously after the client is created so the user gets immediate response.
+    """
+    try:
+        # Extract website hierarchy using the parsing module
+        all_urls, md_contents = await extract_website_hierarchy(website_url)
+
+        assert len(all_urls) == len(md_contents)
+
+        async with DBSessionContext() as session:
+            result = await session.execute(
+                select(models.Client)
+                .where(
+                    models.Client.id == client_id,
+                )
+            )
+            client = result.scalar_one_or_none()
+
+            if not client:
+                raise ValueError("Cannot parse website for non existing client.")
+
+            for md_content in md_contents:
+                client_context = models.ClientContext(
+                    content=md_content,
+                    clients=[client]
+                )
+                session.add(client_context)
+            await session.commit()
+
+    except Exception as e:
+        # Log any errors that occur during parsing
+        print(f"Error parsing website for client {client_id}: {e}")
 
 
 async def get_clients(deps=BasicDeps):
@@ -42,7 +80,7 @@ async def get_new_client(deps=BasicDeps, csrf=RetrieveCSRF):
     )
 
 
-async def post_new_client(deps=BasicDeps, csrf=ValidateCSRF, website: str = Form()):
+async def post_new_client(background_tasks: BackgroundTasks, deps=BasicDeps, csrf=ValidateCSRF, website: str = Form()):
     if not isinstance(deps.user, models.User):
         return RedirectResponse(url="/login", status_code=302)
     
@@ -77,6 +115,9 @@ async def post_new_client(deps=BasicDeps, csrf=ValidateCSRF, website: str = Form
     await deps.user.awaitable_attrs.clients
     deps.user.clients.append(new_client)
     await deps.session.commit()
+
+    # Add background task to parse the website
+    background_tasks.add_task(parse_website_background_task, new_client.id, website)
 
     return RedirectResponse(url="/clients", status_code=302)
 

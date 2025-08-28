@@ -16,7 +16,9 @@ dependencies = [
     "redis[hiredis] (>=6.3.0,<7.0.0)",
     "python-multipart (>=0.0.20,<0.0.21)",
     "pydantic[email] (>=2.11.7,<3.0.0)",
-    "pwdlib[argon2] (>=0.2.1,<0.3.0)"
+    "pwdlib[argon2] (>=0.2.1,<0.3.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "trafilatura (>=2.0.0,<3.0.0)"
 ]
 
 

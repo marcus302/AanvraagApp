@@ -200,7 +200,7 @@ class UserContext(TimestampMixin, Base):
 
 class ClientContext(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
-
+    content: Mapped[str] = mapped_column(String, nullable=False)
     clients: Mapped[List["Client"]] = relationship(
         secondary=client_context_association,
         back_populates="client_contexts",

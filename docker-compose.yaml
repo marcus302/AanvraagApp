@@ -23,3 +23,14 @@ services:
     ports:
       - 1025:1025 # SMTP server
       - 8025:8025 # Web UI
+  adminer:
+    platform: linux/amd64
+    image: adminer:5.3.0
+    # TODO: Fix in a better way: https://github.com/TimWolla/docker-adminer/issues/167
+    user: root  # Otherwise Adminer cannot update records in sqlite...
+    ports:
+      - 8080:8080
+    volumes:
+      - ./data/aanvraagapp.db:/app/aanvraagapp.db
+      - ../adminer-plugin-sqlite/sqlite.php:/var/www/html/sqlite.php
+      - ../adminer-plugin-sqlite/plugins:/var/www/html/plugins
