@@ -12,6 +12,8 @@ services:
       - .:/app
     depends_on:
       - redis
+    env_file:
+      - ./.env
   redis:
     platform: linux/amd64
     image: "redis:alpine"

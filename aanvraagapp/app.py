@@ -3,7 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .routers import auth_router, home_router, client_router, provider_router
+from aanvraagapp.routers import auth_router, home_router, client_router, provider_router
+from aanvraagapp.config import settings
+
 
 # Configure logging to output to stdout/stderr for Docker
 logging.basicConfig(
@@ -18,7 +20,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.cors_allowed_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

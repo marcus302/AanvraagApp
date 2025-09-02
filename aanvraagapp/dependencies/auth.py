@@ -17,15 +17,11 @@ from jinja2 import Template
 from aanvraagapp.database import DBSession, RedisSession
 from aanvraagapp.templates import templates
 from aanvraagapp.email import send_email_mailhog
+from aanvraagapp.config import settings
 
 from .. import models
 
-# Set up logger
 logger = logging.getLogger(__name__)
-
-# Magic constants
-SESSION_EXPIRY_HOURS = 24  # TODO: Move to env vars
-SESSION_COOKIE_NAME = "session_token"
 
 
 class PasswordHelper:
@@ -108,7 +104,7 @@ async def create_session_and_login(
         "last_name": login_result.last_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "expires_at": (
-            datetime.now(timezone.utc) + timedelta(hours=SESSION_EXPIRY_HOURS)
+            datetime.now(timezone.utc) + timedelta(hours=settings.session_expiry_hours)
         ).isoformat(),
         "csrf": secrets.token_urlsafe(32)
     }
@@ -116,15 +112,15 @@ async def create_session_and_login(
     redis_key = f"session:{session_token}"
     await redis_client.setex(
         redis_key,
-        SESSION_EXPIRY_HOURS * 3600,  # Convert hours to seconds
+        settings.session_expiry_seconds,
         json.dumps(session_data),
     )
 
     response = RedirectResponse(url="/home", status_code=302)
     response.set_cookie(
-        key=SESSION_COOKIE_NAME,
+        key=settings.session_cookie_name,
         value=session_token,
-        max_age=SESSION_EXPIRY_HOURS * 3600,
+        max_age=settings.session_expiry_seconds,
         httponly=True,
         secure=True,
         samesite="strict",
@@ -149,7 +145,7 @@ async def get_session_and_key_from_redis(request: Request, redis_client=RedisSes
     # so that FastAPI does not consider it to be an obligatory dependency
     # for all dependencies that (indirectly) use this, such as through
     # redirect_if_authenticated.
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    session_token = request.cookies.get(settings.session_cookie_name)
     if not session_token:
         logger.info("Session validation failed: no token given")
         return GetSessionFromRedisRes.NO_TOKEN_GIVEN
@@ -205,13 +201,13 @@ async def validate_session(
             return ValidateSessionRes.NO_USER_FOUND
 
         # Refresh session expiry time
-        await redis_client.expire(redis_key, SESSION_EXPIRY_HOURS * 3600)
+        await redis_client.expire(redis_key, settings.session_expiry_seconds)
 
         return user
 
     except (json.JSONDecodeError, KeyError, ValueError):
         await redis_client.delete(redis_key)
-        logger.error("Session validation failed: parsing error", exzc_info=True)
+        logger.error("Session validation failed: parsing error", exc_info=True)
         return ValidateSessionRes.PARSING_ERROR
 
 
@@ -298,7 +294,7 @@ async def forgot_password(
             Template, templates.get_template("email/forgot_password_404.jinja")
         )
         rendered_template = template.render()
-        await send_email_mailhog(email, rendered_template, "Onbekend Account")
+        await send_email_mailhog(email, rendered_template, "Onbekend Account", settings.mail)
         logger.info(f"Password reset attempt failed: email not found for {email}")
         return ForgotPasswordRes.EMAIL_404
 
@@ -324,7 +320,7 @@ async def forgot_password(
         reset_password_url=forgot_pw_url,
         n_minutes_till_expiry=15,
     )
-    await send_email_mailhog(user.email, rendered_template, "Nieuw Wachtwoord")
+    await send_email_mailhog(user.email, rendered_template, "Nieuw Wachtwoord", settings.mail)
     logger.info(f"Password reset email sent for {user.email}")
     return ForgotPasswordRes.FORGOT_PW_EMAIL_SENT
 

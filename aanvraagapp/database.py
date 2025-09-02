@@ -6,14 +6,16 @@ from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from contextlib import asynccontextmanager
 
+from aanvraagapp.config import settings
+
 
 # DATABASE_URI = "sqlite+aiosqlite:///./aanvraagapp.db"
-DATABASE_URI = "postgresql+asyncpg://mark:mark@db:5432/mark"
-REDIS_URI = "redis://redis:6379/0"
+# DATABASE_URI = "postgresql+asyncpg://mark:mark@db:5432/mark"
+# REDIS_URI = "redis://redis:6379/0"
 
 # Create async engine and session maker
 async_engine = create_async_engine(
-    DATABASE_URI,
+    settings.database.database_uri,
     # echo=True,  # Set to False in production
     future=True,
 )
@@ -37,7 +39,7 @@ DBSessionContext = asynccontextmanager(get_async_session)
 
 async def get_redis_client():
     client = redis.Redis.from_pool(
-        redis.ConnectionPool.from_url(REDIS_URI, decode_responses=True)
+        redis.ConnectionPool.from_url(settings.redis_uri, decode_responses=True)
     )
     yield client
     await client.aclose()
