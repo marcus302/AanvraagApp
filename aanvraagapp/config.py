@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Discriminator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
 
 
 class LocalMailSettings(BaseModel):
@@ -93,6 +94,11 @@ class Settings(BaseSettings):
         return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
 
 
+try:
+    environment = os.environ["ENVIRONMENT"]
+except KeyError:
+    # TODO: Probably better to set explicitly with direnv...
+    environment = "local.localhost"
 
 
-settings = Settings()  # type: ignore[reportCallIssue]
+settings = Settings(_env_file=f".{environment}.env")  # type: ignore[reportCallIssue]

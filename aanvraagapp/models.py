@@ -217,7 +217,8 @@ class ClientContext(TimestampMixin, Base):
 
 class ListingContext(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
-
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    v: Mapped[NDArray[np.float32]] = mapped_column(Vector(8))
     listings: Mapped[List["Listing"]] = relationship(
         secondary=listing_context_association,
         back_populates="listing_contexts",

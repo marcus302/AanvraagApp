@@ -11,8 +11,8 @@ services:
       - .:/app
     depends_on:
       - redis
-    env_file:
-      - ./.env
+    environment:
+      - ENVIRONMENT=local.container
   redis:
     platform: linux/amd64
     image: "redis:alpine"
