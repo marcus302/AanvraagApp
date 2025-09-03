@@ -8,12 +8,6 @@
             <h1 class="text-3xl font-bold text-text-primary mb-2">Providers</h1>
             <p class="text-text-secondary">Manage your provider relationships</p>
         </div>
-        <a href="{{ url_for('get_new_provider_page') }}" class="inline-flex items-center px-6 py-3 bg-accent text-bg-primary font-medium rounded-xl hover:bg-accent/90 transition-colors duration-200 shadow-lg">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-            Add New Provider
-        </a>
     </div>
 
     <!-- Providers Grid -->
@@ -68,13 +62,7 @@
                 </svg>
             </div>
             <h3 class="text-xl font-semibold text-text-primary mb-2">No providers yet</h3>
-            <p class="text-text-secondary mb-6">Get started by adding your first provider</p>
-            <a href="{{ url_for('get_new_provider_page') }}" class="inline-flex items-center px-6 py-3 bg-accent text-bg-primary font-medium rounded-xl hover:bg-accent/90 transition-colors duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Add Your First Provider
-            </a>
+            <p class="text-text-secondary">Contact an administrator to add providers to the system</p>
         </div>
     {% endif %}
 </div>

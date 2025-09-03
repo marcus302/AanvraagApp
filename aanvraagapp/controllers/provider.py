@@ -29,57 +29,6 @@ async def get_providers(deps=BasicDeps):
     )
 
 
-async def get_new_provider(deps=BasicDeps, csrf=RetrieveCSRF):
-    if not isinstance(deps.user, models.User) or not isinstance(csrf, str):
-        return RedirectResponse(url="/login", status_code=302)
-
-    return templates.TemplateResponse(
-        "pages/provider/new-provider.jinja",
-        {
-            "request": deps.request,
-            "current_user": deps.user,
-            "active_page": "providers",
-            "csrf_token": csrf,
-        },
-    )
-
-
-async def post_new_provider(deps=BasicDeps, csrf=ValidateCSRF, website: str = Form()):
-    if not isinstance(deps.user, models.User):
-        return RedirectResponse(url="/login", status_code=302)
-    
-    if csrf != ValidateCSRFRes.VALID:
-        return templates.TemplateResponse(
-            "pages/403.jinja",
-            {
-                "request": deps.request,
-                "current_user": deps.user,
-                "active_page": "providers",
-            },
-        )
-
-    try:
-        HttpUrl(website)
-    except ValidationError:
-        return templates.TemplateResponse(
-            "pages/provider/new-provider.jinja",
-            {
-                "request": deps.request,
-                "current_user": deps.user,
-                "active_page": "providers",
-                "csrf_token": csrf,
-                "error": "Please enter a valid website URL",
-                "website": website,
-            },
-        )
-
-    new_provider = models.Provider(website=website)
-    deps.session.add(new_provider)
-    await deps.session.commit()
-
-    return RedirectResponse(url="/providers", status_code=302)
-
-
 async def get_provider_detail(provider_id: int, deps=BasicDeps):
     if not isinstance(deps.user, models.User):
         return RedirectResponse(url="/login", status_code=302)
