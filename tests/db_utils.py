@@ -1,11 +1,11 @@
 import asyncio
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from aanvraagapp import models
 from aanvraagapp.dependencies.auth import password_helper
 from aanvraagapp.config import settings
+from aanvraagapp.database import async_session_maker
 
 async def delete_tables():
     """Delete all tables from the database - for testing only"""
@@ -24,71 +24,57 @@ async def create_db_and_tables():
 
 
 async def create_dummy_users():
-    """Create dummy users with properly hashed passwords using plain SQL - for testing only"""
-    engine = create_async_engine(settings.database.database_uri)
+    """Create dummy users with properly hashed passwords using ORM - for testing only"""
+    async with async_session_maker() as session:
+        # Create dummy user data with hashed passwords
+        dummy_users = [
+            models.User(
+                first_name="John",
+                last_name="Doe",
+                email="john.doe@example.com",
+                hashed_password=password_helper.hash("password"),
+            ),
+            models.User(
+                first_name="Jane",
+                last_name="Smith",
+                email="jane.smith@example.com",
+                hashed_password=password_helper.hash("password"),
+            ),
+            models.User(
+                first_name="Bob",
+                last_name="Johnson",
+                email="bob.johnson@example.com",
+                hashed_password=password_helper.hash("password"),
+            ),
+        ]
 
-    # Create dummy user data with hashed passwords
-    dummy_users = [
-        {
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "john.doe@example.com",
-            "hashed_password": password_helper.hash("password"),
-        },
-        {
-            "first_name": "Jane",
-            "last_name": "Smith",
-            "email": "jane.smith@example.com",
-            "hashed_password": password_helper.hash("password"),
-        },
-        {
-            "first_name": "Bob",
-            "last_name": "Johnson",
-            "email": "bob.johnson@example.com",
-            "hashed_password": password_helper.hash("password"),
-        },
-    ]
-
-    async with engine.begin() as conn:
-        for user_data in dummy_users:
-            await conn.execute(
-                text(
-                    'INSERT INTO "user" (first_name, last_name, email, hashed_password, created_at, updated_at) VALUES (:first_name, :last_name, :email, :hashed_password, NOW(), NOW())'
-                ),
-                user_data,
-            )
-
-    await engine.dispose()
-    print("Dummy users created successfully!")
+        for user in dummy_users:
+            session.add(user)
+        
+        await session.commit()
+        print("Dummy users created successfully!")
 
 
 async def create_dummy_providers():
-    """Create dummy providers - for testing only"""
-    engine = create_async_engine("postgresql+asyncpg://mark:mark@db:5432/mark")
+    """Create dummy providers using ORM - for testing only"""
+    async with async_session_maker() as session:
+        # Create dummy provider data
+        dummy_providers = [
+            models.Provider(
+                name="RVO",
+                website="https://rvo.nl",
+            ),
+            models.Provider(
+                name="SNN",
+                website="https://snn.nl",
+            ),
+        ]
 
-    # Create dummy provider data
-    dummy_providers = [
-        {
-            "name": "RVO",
-            "website": "https://rvo.nl",
-        },
-        {
-            "name": "SNN",
-            "website": "https://snn.nl",
-        },
-    ]
-
-    async with engine.begin() as conn:
-        for provider_data in dummy_providers:
-            await conn.execute(
-                text(
-                    'INSERT INTO "provider" (name, website, created_at, updated_at) VALUES (:name, :website, NOW(), NOW())'
-                ),
-                provider_data,
-            )
-
-    await engine.dispose()
-    print("Dummy providers created successfully!")
+        for provider in dummy_providers:
+            session.add(provider)
+        
+        await session.commit()
+        print("Dummy providers created successfully!")
 
 
 async def init_db():

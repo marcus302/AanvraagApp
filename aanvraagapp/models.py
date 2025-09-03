@@ -165,6 +165,8 @@ class Listing(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
 
+    website: Mapped[str] = mapped_column(String, nullable=False)
+
     provider: Mapped["Provider"] = relationship(
         back_populates="listings", lazy="select"
     )
