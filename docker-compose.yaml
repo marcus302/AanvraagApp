@@ -8,7 +8,6 @@ services:
       - 80:80
       - 5678:5678
     volumes:
-      - ./data/aanvraagapp.db:/app/aanvraagapp.db
       - .:/app
     depends_on:
       - redis

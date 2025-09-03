@@ -33,6 +33,24 @@
             <input type="hidden" name="csrf" value="{{ csrf_token }}">
             
             <div>
+                <label for="name" class="block text-sm font-medium text-text-primary mb-2">
+                    Client Name <span class="text-red-400">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    value="{{ name or '' }}"
+                    placeholder="Enter client name"
+                    class="w-full px-4 py-3 bg-bg-secondary border border-border rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
+                    required
+                >
+                <p class="mt-2 text-sm text-text-secondary">
+                    Enter the name of your client or company.
+                </p>
+            </div>
+
+            <div>
                 <label for="website" class="block text-sm font-medium text-text-primary mb-2">
                     Website URL <span class="text-red-400">*</span>
                 </label>

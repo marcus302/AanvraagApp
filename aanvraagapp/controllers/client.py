@@ -82,7 +82,7 @@ async def get_new_client(deps=BasicDeps, csrf=RetrieveCSRF):
     )
 
 
-async def post_new_client(background_tasks: BackgroundTasks, deps=BasicDeps, csrf=ValidateCSRF, website: str = Form()):
+async def post_new_client(background_tasks: BackgroundTasks, deps=BasicDeps, csrf=ValidateCSRF, name: str = Form(), website: str = Form()):
     if not isinstance(deps.user, models.User):
         return RedirectResponse(url="/login", status_code=302)
     
@@ -93,6 +93,21 @@ async def post_new_client(background_tasks: BackgroundTasks, deps=BasicDeps, csr
                 "request": deps.request,
                 "current_user": deps.user,
                 "active_page": "clients",
+            },
+        )
+
+    # Validate name is not empty
+    if not name or not name.strip():
+        return templates.TemplateResponse(
+            "pages/client/new-client.jinja",
+            {
+                "request": deps.request,
+                "current_user": deps.user,
+                "active_page": "clients",
+                "csrf_token": csrf,
+                "error": "Please enter a client name",
+                "name": name,
+                "website": website,
             },
         )
 
@@ -107,11 +122,12 @@ async def post_new_client(background_tasks: BackgroundTasks, deps=BasicDeps, csr
                 "active_page": "clients",
                 "csrf_token": csrf,
                 "error": "Please enter a valid website URL",
+                "name": name,
                 "website": website,
             },
         )
 
-    new_client = models.Client(website=website)
+    new_client = models.Client(name=name.strip(), website=website)
     deps.session.add(new_client)
     await deps.session.flush()
     await deps.user.awaitable_attrs.clients

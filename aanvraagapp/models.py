@@ -122,6 +122,8 @@ class User(TimestampMixin, Base):
 
 class Client(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
     website: Mapped[str] = mapped_column(String, nullable=False)
 
     users: Mapped[List["User"]] = relationship(
@@ -179,6 +181,8 @@ class Listing(TimestampMixin, Base):
 
 class Provider(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
     website: Mapped[str] = mapped_column(String, nullable=False)
 
     listings: Mapped[List["Listing"]] = relationship(
