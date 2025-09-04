@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
+from enum import Enum
 from numpy.typing import NDArray
 import numpy as np
 
@@ -57,47 +58,47 @@ client_application_association = Table(
     Column("application_id", Integer, ForeignKey("application.id"), primary_key=True),
 )
 
-client_context_association = Table(
-    "client_context_association",
+client_document_association = Table(
+    "client_document_association",
     Base.metadata,
     Column("client_id", Integer, ForeignKey("client.id"), primary_key=True),
     Column(
-        "client_context_id", Integer, ForeignKey("client_context.id"), primary_key=True
+        "client_document_id", Integer, ForeignKey("client_document.id"), primary_key=True
     ),
 )
 
-listing_context_association = Table(
-    "listing_context_association",
+listing_document_association = Table(
+    "listing_document_association",
     Base.metadata,
     Column("listing_id", Integer, ForeignKey("listing.id"), primary_key=True),
     Column(
-        "listing_context_id",
+        "listing_document_id",
         Integer,
-        ForeignKey("listing_context.id"),
+        ForeignKey("listing_document.id"),
         primary_key=True,
     ),
 )
 
-application_context_association = Table(
-    "application_context_association",
+application_document_association = Table(
+    "application_document_association",
     Base.metadata,
     Column("application_id", Integer, ForeignKey("application.id"), primary_key=True),
     Column(
-        "application_context_id",
+        "application_document_id",
         Integer,
-        ForeignKey("application_context.id"),
+        ForeignKey("application_document.id"),
         primary_key=True,
     ),
 )
 
-provider_context_association = Table(
-    "provider_context_association",
+provider_document_association = Table(
+    "provider_document_association",
     Base.metadata,
     Column("provider_id", Integer, ForeignKey("provider.id"), primary_key=True),
     Column(
-        "provider_context_id",
+        "provider_document_id",
         Integer,
-        ForeignKey("provider_context.id"),
+        ForeignKey("provider_document.id"),
         primary_key=True,
     ),
 )
@@ -115,7 +116,7 @@ class User(TimestampMixin, Base):
     listings: Mapped[List["Listing"]] = relationship(
         secondary=user_listing_association, back_populates="users", lazy="select"
     )
-    user_context: Mapped[Optional["UserContext"]] = relationship(
+    user_document: Mapped[Optional["UserDocument"]] = relationship(
         back_populates="user", lazy="select", uselist=False
     )
 
@@ -134,8 +135,8 @@ class Client(TimestampMixin, Base):
         back_populates="clients",
         lazy="select",
     )
-    client_contexts: Mapped[List["ClientContext"]] = relationship(
-        secondary=client_context_association, back_populates="clients", lazy="select"
+    client_documents: Mapped[List["ClientDocument"]] = relationship(
+        secondary=client_document_association, back_populates="clients", lazy="select"
     )
 
 
@@ -151,8 +152,8 @@ class Application(TimestampMixin, Base):
         back_populates="applications",
         lazy="select",
     )
-    application_contexts: Mapped[List["ApplicationContext"]] = relationship(
-        secondary=application_context_association,
+    application_documents: Mapped[List["ApplicationDocument"]] = relationship(
+        secondary=application_document_association,
         back_populates="applications",
         lazy="select",
     )
@@ -173,8 +174,8 @@ class Listing(TimestampMixin, Base):
     users: Mapped[List["User"]] = relationship(
         secondary=user_listing_association, back_populates="listings", lazy="select"
     )
-    listing_contexts: Mapped[List["ListingContext"]] = relationship(
-        secondary=listing_context_association, back_populates="listings", lazy="select"
+    listing_documents: Mapped[List["ListingDocument"]] = relationship(
+        secondary=listing_document_association, back_populates="listings", lazy="select"
     )
     applications: Mapped[List["Application"]] = relationship(
         back_populates="listing", lazy="select"
@@ -190,58 +191,91 @@ class Provider(TimestampMixin, Base):
     listings: Mapped[List["Listing"]] = relationship(
         back_populates="provider", lazy="select"
     )
-    provider_contexts: Mapped[List["ProviderContext"]] = relationship(
-        secondary=provider_context_association,
+    provider_documents: Mapped[List["ProviderDocument"]] = relationship(
+        secondary=provider_document_association,
         back_populates="providers",
         lazy="select",
     )
 
 
-class UserContext(TimestampMixin, Base):
+class UserDocument(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    # This will contain the user's own preferences.
+    content: Mapped[str] = mapped_column(String, nullable=True)
+    user: Mapped["User"] = relationship(back_populates="user_document", lazy="select")
 
-    user: Mapped["User"] = relationship(back_populates="user_context", lazy="select")
+
+class DocumentType(str, Enum):
+    PDF = "pdf"
+    TEXT = "text"
+    WEBPAGE = "webpage"
 
 
-class ClientContext(TimestampMixin, Base):
+class ClientDocument(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
-    content: Mapped[str] = mapped_column(String, nullable=False)
-    v: Mapped[NDArray[np.float32]] = mapped_column(Vector(8))
+    doc_type: Mapped[DocumentType] = mapped_column(String, nullable=False)
+    uri: Mapped[str] = mapped_column(String, nullable=False)
     clients: Mapped[List["Client"]] = relationship(
-        secondary=client_context_association,
-        back_populates="client_contexts",
+        secondary=client_document_association,
+        back_populates="client_documents",
         lazy="select",
+    )
+    chunks: Mapped[List["ClientDocumentChunk"]] = relationship(
+        back_populates="document", lazy="select"
     )
 
 
-class ListingContext(TimestampMixin, Base):
+class ClientDocumentChunk(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("client_document.id"))
     content: Mapped[str] = mapped_column(String, nullable=False)
-    v: Mapped[NDArray[np.float32]] = mapped_column(Vector(8))
-    listings: Mapped[List["Listing"]] = relationship(
-        secondary=listing_context_association,
-        back_populates="listing_contexts",
-        lazy="select",
+    emb: Mapped[NDArray[np.float32]] = mapped_column(Vector(3072))
+    document: Mapped["ClientDocument"] = relationship(
+        back_populates="chunks", lazy="select"
     )
 
 
-class ApplicationContext(TimestampMixin, Base):
+class ListingDocument(TimestampMixin, Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    doc_type: Mapped[DocumentType] = mapped_column(String, nullable=False)
+    uri: Mapped[str] = mapped_column(String, nullable=False)
+    listings: Mapped[List["Listing"]] = relationship(
+        secondary=listing_document_association,
+        back_populates="listing_documents",
+        lazy="select",
+    )
+    chunks: Mapped[List["ListingDocumentChunk"]] = relationship(
+        back_populates="document", lazy="select"
+    )
+
+
+class ListingDocumentChunk(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("listing_document.id"))
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    emb: Mapped[NDArray[np.float32]] = mapped_column(Vector(3072))
+    document: Mapped["ListingDocument"] = relationship(
+        back_populates="chunks", lazy="select"
+    )
+
+
+class ApplicationDocument(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     applications: Mapped[List["Application"]] = relationship(
-        secondary=application_context_association,
-        back_populates="application_contexts",
+        secondary=application_document_association,
+        back_populates="application_documents",
         lazy="select",
     )
 
 
-class ProviderContext(TimestampMixin, Base):
+class ProviderDocument(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     providers: Mapped[List["Provider"]] = relationship(
-        secondary=provider_context_association,
-        back_populates="provider_contexts",
+        secondary=provider_document_association,
+        back_populates="provider_documents",
         lazy="select",
     )
 

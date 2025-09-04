@@ -9,6 +9,7 @@ from .. import models
 from ..dependencies import ValidateCSRF, BasicDeps, RetrieveCSRF
 from ..templates import templates
 from ..parsing.website import extract_website_hierarchy
+from ..parsing.utils import chunk_text, generate_embedding
 from ..database import DBSessionContext
 
 
@@ -22,6 +23,8 @@ async def parse_website_background_task(client_id: int, website_url: str):
         all_urls, md_contents = await extract_website_hierarchy(website_url)
 
         assert len(all_urls) == len(md_contents)
+        all_urls = [i for i, j in zip(all_urls, md_contents) if j is not None]
+        md_contents = [j for i, j in zip(all_urls, md_contents) if j is not None]
 
         async with DBSessionContext() as session:
             result = await session.execute(
@@ -35,15 +38,43 @@ async def parse_website_background_task(client_id: int, website_url: str):
             if not client:
                 raise ValueError("Cannot parse website for non existing client.")
 
-            for md_content in md_contents:
-                import random
-                client_context = models.ClientContext(
-                    content=md_content,
-                    v=[random.randint(1, 100) for _ in range(8)],
-                    clients=[client]
-                )
-                session.add(client_context)
+            # Create a single ClientDocument with webpage type
+            client_document = models.ClientDocument(
+                doc_type=models.DocumentType.WEBPAGE,
+                uri=website_url
+            )
+            session.add(client_document)
+            await session.flush()  # Get the ID
+            
+            # Link the document to the client
+            client.client_documents.append(client_document)
+            
+            # Process each md_content through chunking and embedding
+            for i, md_content in enumerate(md_contents):
+                # Split content into chunks
+                chunks = chunk_text(md_content, chunk_size=1024, overlap=128)
+                
+                for j, chunk_content in enumerate(chunks):
+                    try:
+                        # Generate embedding for each chunk
+                        embedding = await generate_embedding(chunk_content)
+                        
+                        # Create ClientDocumentChunk
+                        chunk = models.ClientDocumentChunk(
+                            document_id=client_document.id,
+                            content=chunk_content,
+                            emb=embedding
+                        )
+                        session.add(chunk)
+                        
+                    except Exception as e:
+                        print(f"Error processing chunk {j+1} of content {i+1}: {e}")
+                        continue
+                
+                print(f"Processed {len(chunks)} chunks for content {i+1}")
+            
             await session.commit()
+            print(f"Successfully saved website parsing results for client {client_id}")
 
     except Exception as e:
         # Log any errors that occur during parsing

@@ -184,7 +184,7 @@ async def extract_page_content(client: httpx.AsyncClient, url: str) -> Optional[
         response = await client.get(url)
         response.raise_for_status()
         # TODO: Research if this is blocking the event loop or is hurting performance.
-        markdown_content = trafilatura.extract(response.text, output_format="markdown")
+        markdown_content = trafilatura.extract(response.text, include_links=True, output_format="markdown")
         logger.info(f"Successfully extracted content from {url}")
         return markdown_content
     except (httpx.RequestError, httpx.HTTPStatusError) as e:
