@@ -27,9 +27,9 @@ def chunk_text(text: str, chunk_size: int = 1024, overlap: int = 128) -> list[st
 
 async def generate_embedding(text: str) -> np.ndarray:
     """Generate embedding using Google Gemini API."""
-    client = genai.Client(api_key=settings.gemini_api_key)
+    client = genai.Client(api_key=settings.gemini_api_key).aio
     # TODO: async?
-    result = client.models.embed_content(
+    result = await client.models.embed_content(
         model="gemini-embedding-001",
         contents=text,
         config=genai.types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
@@ -37,4 +37,11 @@ async def generate_embedding(text: str) -> np.ndarray:
     # Convert to numpy array and ensure it's float32
     assert result.embeddings is not None
     embedding_values = result.embeddings[0].values
-    return np.array(embedding_values, dtype=np.float32) 
+    return np.array(embedding_values, dtype=np.float32)
+
+async def rewrite_in_md(cleaned_html: str) -> str:
+    client = genai.Client(api_key=settings.gemini_api_key).aio
+    response = await client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"",
+    )

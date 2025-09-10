@@ -1,0 +1,14 @@
+You will be given the HTML of a web page where a subsidy is described. A lot of HTML CSS and inline styles have already been removed for you, but some stuff that is not related to the subsidy most likely remains. For example:
+
+1. Headers
+2. Footers
+3. Copyright notices
+4. Advertisements
+
+It is your task to rewrite the complete text of the subsidy, excluding the unrelated stuff, and only the text related to the main body of text and the subsidy itself, into neatly formatted markdown. Make sure you incorporate all of the subsidy text and do as little rewriting or summarization as possible. Your extracted text should be as true to life as possible and should have as few textual modifications as possible.
+
+Wherever possible, translate adequately between the html and markdown equivalents. So paragraph headers should become headers in markdown, links should still be markdown, etc. Make sure you reply with only this rewritten markdown. Don't preface or end with anything else, like your own thoughts, or anything else. Your reply should simply directly begin with the markdown formatted text, and end with it as well.
+
+The HTML of the web page is:
+
+{{html_content | safe}}
