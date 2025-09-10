@@ -70,7 +70,10 @@ async def _create_listing_from_subsidy(
     # Create new listing
     listing = Listing(
         provider_id=provider.id,
-        website=subsidy_url
+        website=subsidy_url,
+        original_content=None,
+        cleaned_content=None,
+        markdown_content=None,
     )
     
     session.add(listing)

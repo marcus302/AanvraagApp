@@ -168,6 +168,10 @@ class Listing(TimestampMixin, Base):
 
     website: Mapped[str] = mapped_column(String, nullable=False)
 
+    original_content: Mapped[str] = mapped_column(String, nullable=True)
+    cleaned_content: Mapped[str] = mapped_column(String, nullable=True)
+    markdown_content: Mapped[str] = mapped_column(String, nullable=True)
+
     provider: Mapped["Provider"] = relationship(
         back_populates="listings", lazy="select"
     )

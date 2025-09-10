@@ -23,58 +23,77 @@ async def create_db_and_tables():
     await engine.dispose()
 
 
-async def create_dummy_users():
+async def create_dummy_users(session):
     """Create dummy users with properly hashed passwords using ORM - for testing only"""
-    async with async_session_maker() as session:
-        # Create dummy user data with hashed passwords
-        dummy_users = [
-            models.User(
-                first_name="John",
-                last_name="Doe",
-                email="john.doe@example.com",
-                hashed_password=password_helper.hash("password"),
-            ),
-            models.User(
-                first_name="Jane",
-                last_name="Smith",
-                email="jane.smith@example.com",
-                hashed_password=password_helper.hash("password"),
-            ),
-            models.User(
-                first_name="Bob",
-                last_name="Johnson",
-                email="bob.johnson@example.com",
-                hashed_password=password_helper.hash("password"),
-            ),
-        ]
+    # Create dummy user data with hashed passwords
+    dummy_users = [
+        models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            hashed_password=password_helper.hash("password"),
+        ),
+        models.User(
+            first_name="Jane",
+            last_name="Smith",
+            email="jane.smith@example.com",
+            hashed_password=password_helper.hash("password"),
+        ),
+        models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob.johnson@example.com",
+            hashed_password=password_helper.hash("password"),
+        ),
+    ]
 
-        for user in dummy_users:
-            session.add(user)
-        
-        await session.commit()
-        print("Dummy users created successfully!")
+    for user in dummy_users:
+        session.add(user)
+    
+    await session.commit()
+    print("Dummy users created successfully!")
+
+    return dummy_users
 
 
-async def create_dummy_providers():
+async def create_dummy_providers(session):
     """Create dummy providers using ORM - for testing only"""
-    async with async_session_maker() as session:
-        # Create dummy provider data
-        dummy_providers = [
-            models.Provider(
-                name="RVO",
-                website="https://rvo.nl",
-            ),
-            models.Provider(
-                name="SNN",
-                website="https://snn.nl",
-            ),
-        ]
+    # Create dummy provider data
+    dummy_providers = [
+        models.Provider(
+            name="RVO",
+            website="https://rvo.nl",
+        ),
+        models.Provider(
+            name="SNN",
+            website="https://snn.nl",
+        ),
+    ]
 
-        for provider in dummy_providers:
-            session.add(provider)
-        
-        await session.commit()
-        print("Dummy providers created successfully!")
+    for provider in dummy_providers:
+        session.add(provider)
+    
+    await session.commit()
+    print("Dummy providers created successfully!")
+
+    return dummy_providers
+
+
+async def create_dummy_listing(session, rvo: models.Provider):
+    listing = models.Listing(
+        provider_id = rvo.id,
+        website = "https://www.rvo.nl/subsidies-financiering/eurostars",
+        original_content = None,
+        cleaned_content = None,
+        markdown_content = None
+    )
+
+    session.add(listing)
+
+    await session.commit()
+    print("Dummy listing added successfully!")
+
+    return listing
 
 
 async def init_db():
@@ -83,11 +102,12 @@ async def init_db():
     await create_db_and_tables()
     print("Database tables created successfully!")
 
-    print("Creating dummy users...")
-    await create_dummy_users()
+    async with async_session_maker() as session:
+        print("Creating dummy users...")
+        await create_dummy_users(session)
 
-    print("Creating dummy providers...")
-    await create_dummy_providers()
+        print("Creating dummy providers...")
+        await create_dummy_providers(session)
 
 
 async def cleanup_db():

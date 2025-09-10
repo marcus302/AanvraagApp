@@ -143,6 +143,7 @@ async def parse_listing(listing: models.Listing, session):
             logger.warning(f"No HTML content found in response from {listing.website}")
             return None
         logger.info(f"Successfully parsed HTML from {listing.website}")
+        listing.original_content = html_content
     except httpx.RequestError as e:
         logger.error(f"Listing API request failed : {str(e)}")
         logger.error(f"Error type: {type(e).__name__}")
@@ -151,6 +152,7 @@ async def parse_listing(listing: models.Listing, session):
 
     # Throw away as much junk as possible.
     cleaned_html = simplify_html(html_content)
+    listing.cleaned_content = cleaned_html
 
     # Ask Gemini to rewrite into Markdown
     template = prompts.get_template("rewrite_in_md.jinja")
@@ -161,7 +163,8 @@ async def parse_listing(listing: models.Listing, session):
         contents=prompt_content
     )
     assert response.text is not None
-    rewritten_in_md = response.text
+    markdown_content = response.text
+    listing.markdown_content = markdown_content
     
     listing_document = models.ListingDocument(
         doc_type=models.DocumentType.WEBPAGE,
@@ -172,20 +175,20 @@ async def parse_listing(listing: models.Listing, session):
     listing.listing_documents.append(listing_document)
     await session.flush()  # Make the id on listing_document available
     
-    chunks = chunk_text(rewritten_in_md, chunk_size=1024, overlap=128)
-    logger.info(f"Created {len(chunks)} chunks from cleaned HTML")
+    # chunks = chunk_text(markdown_content, chunk_size=1024, overlap=128)
+    # logger.info(f"Created {len(chunks)} chunks from cleaned HTML")
     
-    for i, chunk_content in enumerate(chunks):
-        embedding = await generate_embedding(chunk_content)
-        chunk = models.ListingDocumentChunk(
-            document_id=listing_document.id,
-            content=chunk_content,
-            emb=embedding
-        )
-        session.add(chunk)
+    # for i, chunk_content in enumerate(chunks):
+    #     embedding = await generate_embedding(chunk_content)
+    #     chunk = models.ListingDocumentChunk(
+    #         document_id=listing_document.id,
+    #         content=chunk_content,
+    #         emb=embedding
+    #     )
+    #     session.add(chunk)
         
-        logger.info(f"Processed chunk {i+1}/{len(chunks)}")
+    #     logger.info(f"Processed chunk {i+1}/{len(chunks)}")
     
     await session.commit()
-    logger.info(f"Successfully saved {len(chunks)} chunks to database")            
+    # logger.info(f"Successfully saved {len(chunks)} chunks to database")            
     return listing_document

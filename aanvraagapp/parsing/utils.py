@@ -38,10 +38,3 @@ async def generate_embedding(text: str) -> np.ndarray:
     assert result.embeddings is not None
     embedding_values = result.embeddings[0].values
     return np.array(embedding_values, dtype=np.float32)
-
-async def rewrite_in_md(cleaned_html: str) -> str:
-    client = genai.Client(api_key=settings.gemini_api_key).aio
-    response = await client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=f"",
-    )

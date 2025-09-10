@@ -3,7 +3,7 @@ from google import genai
 from aanvraagapp.config import settings
 
 
-# @pytest.mark.skip(reason="Uses Gemini API")
+@pytest.mark.skip(reason="Uses Gemini API")
 async def test_gemini_url_context():
     """
     RVO does not allow Gemini to dynamically retrieve URL's on the website it seems.
