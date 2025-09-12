@@ -73,8 +73,8 @@ async def chunk_webpage(webpage: models.Webpage, session):
     logger.info(f"Split text into {len(md_header_splits)} chunks from webpage {webpage.url}")
     chunks = []
     for i in range(0, len(md_header_splits), 16):
-        md_header_splits[i:i + 16]
-        texts = [i.page_content for i in md_header_splits]
+        cur_set = md_header_splits[i:i + 16]
+        texts = [i.page_content for i in cur_set]
         embeddings = await ai_client.embed_content(texts)
         for e, t in zip(embeddings, texts):
             c = models.Chunk(

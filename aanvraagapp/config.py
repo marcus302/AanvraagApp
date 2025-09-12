@@ -92,6 +92,14 @@ class Settings(BaseSettings):
     @property
     def redis_uri(self):
         return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+    
+    # Ollama
+    ollama_host: str
+    ollama_port: int
+
+    @property
+    def ollama_uri(self):
+        return f"http://{self.ollama_host}:{self.ollama_port}"
 
 
 try:

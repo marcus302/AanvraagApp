@@ -37,7 +37,7 @@ class AIWrapper:
             
         elif self.provider == "ollama":
             model = model or "reader-lm:1.5b"
-            response = await ollama.AsyncClient().generate(
+            response = await ollama.AsyncClient(host=settings.ollama_uri).generate(
                 model=model,
                 prompt=prompt,
                 options={
@@ -66,9 +66,16 @@ class AIWrapper:
             
         elif self.provider == "ollama":
             model = model or "nomic-embed-text:v1.5"  # Has output dimensionality of 768.
-            response = await ollama.AsyncClient().embed(
+            
+            # Prefix required, see https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+            if isinstance(text, str):
+                prefixed_text = f"search_document: {text}"
+            else:
+                prefixed_text = [f"search_document: {t}" for t in text]
+            
+            response = await ollama.AsyncClient(host=settings.ollama_uri).embed(
                 model=model,
-                input=text,
+                input=prefixed_text,
             )
             embedding_values = response.embeddings
             return np.array(embedding_values, dtype=np.float32)
