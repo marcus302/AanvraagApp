@@ -1,194 +1,89 @@
 import httpx
 import logging
 from aanvraagapp import models
-from .utils import chunk_text, generate_embedding
-from bs4 import BeautifulSoup, Comment, Tag
-from bs4.element import NavigableString
-from google import genai
+from .ai import create_ai_client
 from aanvraagapp.config import settings
 from aanvraagapp.parsing.prompts import prompts
+from .clean import clean_html
+from langchain_text_splitters import MarkdownHeaderTextSplitter
 
 
 logger = logging.getLogger(__name__)
 
 
-def simplify_html(html_content):
-    """
-    Simplify HTML content to preserve only human-readable content and structure.
-    
-    Args:
-        html_content (str): The HTML content to simplify
-        
-    Returns:
-        str: Simplified HTML
-    """
-    # Parse the HTML
-    soup = BeautifulSoup(html_content, 'html.parser')
-    
-    # Define tags we want to preserve (content-related tags)
-    preserve_tags = {
-        # Text content
-        'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'span', 'strong', 'b', 'em', 'i', 'u',
-        'blockquote', 'pre', 'code',
-        # Lists
-        'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-        # Tables
-        'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
-        # Links
-        'a',
-        # Other content elements
-        'br', 'hr', 'abbr', 'cite', 'mark', 'sub', 'sup'
-    }
-    
-    # Tags to always remove (even if they have content)
-    always_remove_tags = {
-        'script', 'style', 'meta', 'link', 'noscript', 
-        'img', 'svg', 'canvas', 'video', 'audio', 'iframe',
-        'object', 'embed', 'source', 'track', 'area', 'map'
-    }
-    
-    # First pass: Remove comments
-    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
-        comment.extract()
-    
-    # Remove all tags that should always be removed
-    for tag_name in always_remove_tags:
-        for tag in soup.find_all(tag_name):
-            tag.decompose()
-    
-    def has_text_content(element):
-        """Check if an element or its descendants contain meaningful text."""
-        if isinstance(element, NavigableString):
-            return bool(element.strip())
-        if hasattr(element, 'get_text'):
-            text = element.get_text(strip=True)
-            return bool(text)
-        return False
-    
-    # Process all elements to clean attributes and handle unwrapping
-    # We need to collect elements first to avoid modifying the tree while iterating
-    all_elements = list(soup.find_all(True))  # Find all tags
-    
-    for element in all_elements:
-        # Skip if element was already removed
-        if not element.parent:
-            continue
-            
-        if element.name in preserve_tags:
-            # For preserved tags, clean attributes
-            if element.name == 'a':
-                # Keep only href for links
-                href = element.get('href')
-                element.attrs.clear()
-                if href:
-                    element['href'] = href
-            else:
-                # Remove all attributes for other preserved tags
-                element.attrs.clear()
-        else:
-            # For non-preserved tags (div, section, article, etc.)
-            # Check if they have text content
-            if has_text_content(element):
-                # Unwrap - replace tag with its contents
-                element.unwrap()
-            else:
-                # Remove empty elements
-                element.decompose()
-    
-    # Clean up whitespace in text nodes
-    def clean_whitespace(soup):
-        """Clean up excessive whitespace."""
-        for element in soup.find_all(string=True):
-            if isinstance(element, NavigableString):
-                # Skip if in a pre tag
-                if element.parent and element.parent.name == 'pre':
-                    continue
-                    
-                # Get the text and clean it
-                text = str(element)
-                # Collapse multiple spaces and newlines
-                text = ' '.join(text.split())
-                
-                if text:
-                    element.replace_with(text)
-                elif element.parent:
-                    # Remove empty text nodes
-                    element.extract()
-    
-    clean_whitespace(soup)
-    
-    # Format the output nicely
-    result = soup.prettify()
-    
-    # Clean up empty lines from prettify
-    lines = result.split('\n')
-    cleaned_lines = []
-    for line in lines:
-        if line.strip():
-            cleaned_lines.append(line.rstrip())
-    
-    return '\n'.join(cleaned_lines)
-
-
-async def parse_listing(listing: models.Listing, session):
+async def clean_and_parse_into_md(url: str, prompt_name: str):
     # Get the raw HTML data from the web page.
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(listing.website)
+            response = await client.get(url)
             response.raise_for_status()
             html_content = response.text
-            logger.info(f"Successfully fetched html content for {listing.website}")
+            logger.info(f"Successfully fetched html content for {url}")
         if not html_content.strip():
-            logger.warning(f"No HTML content found in response from {listing.website}")
-            return None
-        logger.info(f"Successfully parsed HTML from {listing.website}")
-        listing.original_content = html_content
+            logger.warning(f"No HTML content found in response from {url}")
+            raise ValueError("Empty HTML")
+        logger.info(f"Successfully parsed HTML from {url}")
     except httpx.RequestError as e:
         logger.error(f"Listing API request failed : {str(e)}")
         logger.error(f"Error type: {type(e).__name__}")
-        return None
-    logger.info(f"Successfully cleaned HTML from {listing.website}")
+        raise e
+    logger.info(f"Successfully cleaned HTML from {url}")
 
     # Throw away as much junk as possible.
-    cleaned_html = simplify_html(html_content)
-    listing.cleaned_content = cleaned_html
+    # cleaned_html = simplify_html(html_content)
+    cleaned_html = clean_html(html_content)
 
-    # Ask Gemini to rewrite into Markdown
-    template = prompts.get_template("rewrite_in_md.jinja")
+    # Ask AI to rewrite into Markdown
+    template = prompts.get_template(prompt_name)
     prompt_content = template.render(html_content=cleaned_html)
-    client = genai.Client(api_key=settings.gemini_api_key).aio
-    response = await client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt_content
+    ai_client = create_ai_client("gemini")  # Use gemini by default
+    converted_to_markdown = await ai_client.generate_content(prompt_content)
+
+    return html_content, cleaned_html, converted_to_markdown
+
+
+async def parse_listing(listing: models.Listing, session):
+    html_content, cleaned_html, converted_to_markdown = await clean_and_parse_into_md(listing.website, "rewrite_subsidy_in_md.jinja")
+
+    webpage = models.Webpage(
+        owner_type=models.WebpageOwnerType.LISTING,
+        owner_id=listing.id,
+        url=listing.website,
+        original_content=html_content,
+        filtered_content=cleaned_html,
+        markdown_content=converted_to_markdown,
     )
-    assert response.text is not None
-    markdown_content = response.text
-    listing.markdown_content = markdown_content
-    
-    listing_document = models.ListingDocument(
-        doc_type=models.DocumentType.WEBPAGE,
-        uri=listing.website,
-    )
-    session.add(listing_document)
-    await listing.awaitable_attrs.listing_documents
-    listing.listing_documents.append(listing_document)
-    await session.flush()  # Make the id on listing_document available
-    
-    # chunks = chunk_text(markdown_content, chunk_size=1024, overlap=128)
-    # logger.info(f"Created {len(chunks)} chunks from cleaned HTML")
-    
-    # for i, chunk_content in enumerate(chunks):
-    #     embedding = await generate_embedding(chunk_content)
-    #     chunk = models.ListingDocumentChunk(
-    #         document_id=listing_document.id,
-    #         content=chunk_content,
-    #         emb=embedding
-    #     )
-    #     session.add(chunk)
-        
-    #     logger.info(f"Processed chunk {i+1}/{len(chunks)}")
+    session.add(webpage)          
     
     await session.commit()
-    # logger.info(f"Successfully saved {len(chunks)} chunks to database")            
-    return listing_document
+    return webpage
+
+
+async def chunk_webpage(webpage: models.Webpage, session):
+    ai_client = create_ai_client("ollama")  # Use ollama by default
+
+    headers_to_split_on = [
+        ("#", "Header 1"),
+        ("##", "Header 2"),
+        ("###", "Header 3"),
+    ]
+
+    markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on)
+    md_header_splits = markdown_splitter.split_text(webpage.markdown_content)
+    logger.info(f"Split text into {len(md_header_splits)} chunks from webpage {webpage.url}")
+    chunks = []
+    for i in range(0, len(md_header_splits), 16):
+        md_header_splits[i:i + 16]
+        texts = [i.page_content for i in md_header_splits]
+        embeddings = await ai_client.embed_content(texts)
+        for e, t in zip(embeddings, texts):
+            c = models.Chunk(
+                owner_type=models.ChunkOwnerType.WEBPAGE,
+                owner_id=webpage.id,
+                content=t,
+                emb=e
+            )
+            session.add(c)
+            chunks.append(c)
+    
+    await session.commit()

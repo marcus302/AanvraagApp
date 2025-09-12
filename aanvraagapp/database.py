@@ -33,9 +33,6 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 DBSession: AsyncSession = Depends(get_async_session)
 
-# For non FastAPI dependency use
-DBSessionContext = asynccontextmanager(get_async_session)
-
 
 async def get_redis_client():
     client = redis.Redis.from_pool(

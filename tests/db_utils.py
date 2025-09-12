@@ -79,13 +79,32 @@ async def create_dummy_providers(session):
     return dummy_providers
 
 
+async def create_dummy_clients(session):
+    # Create dummy client data
+    dummy_clients = [
+        models.Client(
+            name="Spheer.ai",
+            website="https://spheer.ai",
+        ),
+        models.Client(
+            name="CursorAM",
+            website="https://cursoram.com",
+        ),
+    ]
+
+    for client in dummy_clients:
+        session.add(client)
+    
+    await session.commit()
+    print("Dummy clients created successfully!")
+
+    return dummy_clients
+
+
 async def create_dummy_listing(session, rvo: models.Provider):
     listing = models.Listing(
         provider_id = rvo.id,
         website = "https://www.rvo.nl/subsidies-financiering/eurostars",
-        original_content = None,
-        cleaned_content = None,
-        markdown_content = None
     )
 
     session.add(listing)
@@ -94,6 +113,30 @@ async def create_dummy_listing(session, rvo: models.Provider):
     print("Dummy listing added successfully!")
 
     return listing
+
+
+async def create_dummy_webpage(session, listing: models.Listing):
+    """Create a dummy webpage using test data content - for testing only"""
+    # Read the content from test data files
+    html_content = open("tests/data/html_content.txt", "r", encoding="utf-8").read()
+    cleaned_content = open("tests/data/cleaned_html.txt", "r", encoding="utf-8").read()
+    markdown_content = open("tests/data/converted_to_markdown.txt", "r", encoding="utf-8").read()
+    
+    webpage = models.Webpage(
+        owner_type=models.WebpageOwnerType.LISTING,
+        owner_id=listing.id,
+        url="https://www.rvo.nl/subsidies-financiering/eurostars",
+        original_content=html_content,
+        filtered_content=cleaned_content,
+        markdown_content=markdown_content,
+    )
+
+    session.add(webpage)
+
+    await session.commit()
+    print("Dummy webpage added successfully!")
+
+    return webpage
 
 
 async def init_db():

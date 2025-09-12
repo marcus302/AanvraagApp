@@ -230,7 +230,7 @@ class Webpage(TimestampMixin, Base):
 
     url: Mapped[str] = mapped_column(String, nullable=False)
     original_content: Mapped[str] = mapped_column(String, nullable=True)
-    cleaned_content: Mapped[str] = mapped_column(String, nullable=True)
+    filtered_content: Mapped[str] = mapped_column(String, nullable=True)
     markdown_content: Mapped[str] = mapped_column(String, nullable=True)
 
     __table_args__ = (
@@ -267,7 +267,7 @@ class Chunk(TimestampMixin, Base):
     owner_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
     content: Mapped[str] = mapped_column(String, nullable=False)
-    emb: Mapped[NDArray[np.float32]] = mapped_column(Vector(3072))
+    emb: Mapped[NDArray[np.float32]] = mapped_column(Vector(768))
 
     __table_args__ = (
         CheckConstraint("owner_type IN ('webpage')", name='chunk_valid_owner_type'),

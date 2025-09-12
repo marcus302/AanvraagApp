@@ -5,7 +5,7 @@ from aanvraagapp.config import settings
 from aanvraagapp.database import async_session_maker, async_engine
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, AsyncTransaction
 from typing import AsyncGenerator
-from tests.db_utils import create_dummy_providers, create_dummy_users, create_dummy_listing
+from tests import db_utils
 
 
 # Required per https://anyio.readthedocs.io/en/stable/testing.html#using-async-fixtures-with-higher-scopes
@@ -33,9 +33,11 @@ async def connection(request, anyio_backend) -> AsyncGenerator[AsyncConnection, 
 
     async with async_session_maker() as session:
         print("adding basic test data set - startup")
-        rvo, snn = await create_dummy_providers(session)
-        john, jane, bob = await create_dummy_users(session)
-        eurostars = await create_dummy_listing(session, rvo)
+        rvo, snn = await db_utils.create_dummy_providers(session)
+        spheer, cursoram = await db_utils.create_dummy_clients(session)
+        john, jane, bob = await db_utils.create_dummy_users(session)
+        eurostars = await db_utils.create_dummy_listing(session, rvo)
+        await db_utils.create_dummy_webpage(session, eurostars)
 
     async with async_engine.connect() as connection:
         yield connection
