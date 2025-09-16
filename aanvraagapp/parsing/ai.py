@@ -62,23 +62,59 @@ class AIWrapper:
             )
             assert result.embeddings is not None
             embedding_values = result.embeddings[0].values
+            # TODO: Shape of array that's returned?
             return np.array(embedding_values, dtype=np.float32)
             
         elif self.provider == "ollama":
-            model = model or "nomic-embed-text:v1.5"  # Has output dimensionality of 768.
+            model = model or "embeddinggemma:300m"  # Has output dimensionality of 768.
             
-            # Prefix required, see https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+            # EmbeddingGemma requires specific prompt formatting for documents
             if isinstance(text, str):
-                prefixed_text = f"search_document: {text}"
+                formatted_text = f"title: none | text: {text}"
             else:
-                prefixed_text = [f"search_document: {t}" for t in text]
+                formatted_text = [f"title: none | text: {t}" for t in text]
             
             response = await ollama.AsyncClient(host=settings.ollama_uri).embed(
                 model=model,
-                input=prefixed_text,
+                input=formatted_text,
             )
             embedding_values = response.embeddings
+            # TODO: Shape of array that's returned?
             return np.array(embedding_values, dtype=np.float32)
+        
+        raise RuntimeError(f"Unsupported provider: {self.provider}")
+
+    async def embed_query(
+        self, 
+        query: str, 
+        model: Optional[str] = None
+    ) -> np.ndarray:
+        """Create embeddings for search queries (as opposed to documents in the corpus)."""
+        if self.provider == "gemini":
+            model = model or "gemini-embedding-001"
+            result = await self.gemini_client.models.embed_content(
+                model=model,
+                contents=query,
+                config=genai.types.EmbedContentConfig(task_type="RETRIEVAL_QUERY", output_dimensionality=768),
+            )
+            assert result.embeddings is not None
+            embedding_values = result.embeddings[0].values
+            # TODO: Shape of array that's returned?
+            return np.array(embedding_values, dtype=np.float32)
+            
+        elif self.provider == "ollama":
+            model = model or "embeddinggemma:300m"  # Has output dimensionality of 768.
+            
+            # EmbeddingGemma requires specific prompt formatting for queries
+            formatted_query = f"task: search result | query: {query}"
+            
+            response = await ollama.AsyncClient(host=settings.ollama_uri).embed(
+                model=model,
+                input=formatted_query,
+            )
+            embedding_values = response.embeddings
+            # TODO: Shape of array that's returned?
+            return np.array(embedding_values, dtype=np.float32).squeeze(0)
         
         raise RuntimeError(f"Unsupported provider: {self.provider}")
 
