@@ -1,14 +1,18 @@
 import asyncio
 
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import selectinload
 
 from aanvraagapp import models
 from aanvraagapp.dependencies.auth import password_helper
 from aanvraagapp.config import settings
 from aanvraagapp.database import async_session_maker
+from aanvraagapp.provider_workflows import run_rvo_workflow
+from sqlalchemy import select
+from aanvraagapp.parsing.listing import parse_listing, chunk_webpage
+from aanvraagapp.controllers.client import parse_website_background_task
 
 async def delete_tables():
-    """Delete all tables from the database - for testing only"""
     engine = create_async_engine(settings.database.database_uri)
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.drop_all)
@@ -16,7 +20,6 @@ async def delete_tables():
 
 
 async def create_db_and_tables():
-    """Create all tables in the database - for testing only"""
     engine = create_async_engine(settings.database.database_uri)
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
@@ -24,8 +27,6 @@ async def create_db_and_tables():
 
 
 async def create_dummy_users(session):
-    """Create dummy users with properly hashed passwords using ORM - for testing only"""
-    # Create dummy user data with hashed passwords
     dummy_users = [
         models.User(
             first_name="John",
@@ -51,14 +52,11 @@ async def create_dummy_users(session):
         session.add(user)
     
     await session.commit()
-    print("Dummy users created successfully!")
 
     return dummy_users
 
 
 async def create_dummy_providers(session):
-    """Create dummy providers using ORM - for testing only"""
-    # Create dummy provider data
     dummy_providers = [
         models.Provider(
             name="RVO",
@@ -74,13 +72,11 @@ async def create_dummy_providers(session):
         session.add(provider)
     
     await session.commit()
-    print("Dummy providers created successfully!")
 
     return dummy_providers
 
 
 async def create_dummy_clients(session):
-    # Create dummy client data
     dummy_clients = [
         models.Client(
             name="Spheer.ai",
@@ -96,7 +92,6 @@ async def create_dummy_clients(session):
         session.add(client)
     
     await session.commit()
-    print("Dummy clients created successfully!")
 
     return dummy_clients
 
@@ -110,14 +105,11 @@ async def create_dummy_listing(session, rvo: models.Provider):
     session.add(listing)
 
     await session.commit()
-    print("Dummy listing added successfully!")
 
     return listing
 
 
 async def create_dummy_webpage(session, listing: models.Listing):
-    """Create a dummy webpage using test data content - for testing only"""
-    # Read the content from test data files
     html_content = open("tests/data/html_content.txt", "r", encoding="utf-8").read()
     cleaned_content = open("tests/data/cleaned_html.txt", "r", encoding="utf-8").read()
     markdown_content = open("tests/data/converted_to_markdown.txt", "r", encoding="utf-8").read()
@@ -134,30 +126,62 @@ async def create_dummy_webpage(session, listing: models.Listing):
     session.add(webpage)
 
     await session.commit()
-    print("Dummy webpage added successfully!")
 
     return webpage
 
 
-async def init_db():
-    """Initialize the database by creating all tables and dummy users - for testing only"""
-    print("Creating database tables...")
+async def init_db_with_dummy():
+    """Initialize db with dummy data, no Gemini usage."""
     await create_db_and_tables()
-    print("Database tables created successfully!")
-
     async with async_session_maker() as session:
-        print("Creating dummy users...")
-        await create_dummy_users(session)
+        rvo, snn = await create_dummy_providers(session)
+        spheer, cursoram = await create_dummy_clients(session)
+        john, jane, bob = await create_dummy_users(session)
+        eurostars = await create_dummy_listing(session, rvo)
+        await create_dummy_webpage(session, eurostars)
 
-        print("Creating dummy providers...")
-        await create_dummy_providers(session)
+
+async def init_db_with_gemini():
+    """Initialize db with dummy data AND Gemini usage."""
+    await create_db_and_tables()
+    async with async_session_maker() as session:
+        rvo, snn = await create_dummy_providers(session)
+        spheer, cursoram = await create_dummy_clients(session)
+        john, jane, bob = await create_dummy_users(session)
+        
+        # Temporary to speed up this setup. See TODO below.
+        listing = models.Listing(
+            provider_id=rvo.id,
+            website="https://www.rvo.nl/subsidies-financiering/eurostars",
+        )
+        session.add(listing)
+        await session.commit()
+        # TODO: Use entire workflow
+        # await run_rvo_workflow()
+        
+        result = await session.execute(
+            select(models.Listing)
+            .where(models.Listing.website == "https://www.rvo.nl/subsidies-financiering/eurostars")
+            .options(selectinload(models.Listing.provider))
+        )
+        listing = result.scalar_one()
+        await parse_listing(listing, session)
+        result = await session.execute(
+            select(models.Webpage)
+            .where(models.Webpage.url == "https://www.rvo.nl/subsidies-financiering/eurostars")
+        )
+        webpage = result.scalar_one()
+        await chunk_webpage(webpage, session)
+        result = await session.execute(
+            select(models.Client)
+            .where(models.Client.website == "https://spheer.ai")
+        )
+        client = result.scalar_one()
+        await parse_website_background_task(client.id, client.website, session)
 
 
 async def cleanup_db():
-    """Clean up the database by dropping all tables - for testing only"""
-    print("Dropping database tables...")
     await delete_tables()
-    print("Database tables dropped successfully!")
 
 
 if __name__ == "__main__":
@@ -165,9 +189,11 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "teardown":
         asyncio.run(cleanup_db())
-    elif len(sys.argv) > 1 and sys.argv[1] == "setup":
-        asyncio.run(init_db())
+    elif len(sys.argv) > 1 and sys.argv[1] == "setup-dummy":
+        asyncio.run(init_db_with_dummy())
+    elif len(sys.argv) > 1 and sys.argv[1] == "setup-gemini":
+        asyncio.run(init_db_with_gemini())
     else:
-        print("Error: Please specify 'setup' or 'teardown'")
-        print("Usage: python -m tests.db_utils setup|teardown")
+        print("Error: Please specify 'setup-dummy', 'setup-gemini', or 'teardown'")
+        print("Usage: python -m tests.db_utils setup-dummy|setup-gemini|teardown")
         sys.exit(1)

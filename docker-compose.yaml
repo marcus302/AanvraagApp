@@ -47,5 +47,19 @@ services:
       POSTGRES_DB: mark
     # usefull for debugging postgres queries!
     # command: ["postgres", "-c", "log_statement=all"]
+  ollama:
+    image: ollama/ollama:rocm
+    expose:
+      - 11434
+    ports:
+      - 11434:11434
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_ORIGINS: "*"
+    volumes:
+      - ollama_data:/root/.ollama
+    devices:
+      - "nvidia.com/gpu=all"
 volumes:
   postgres_data:
+  ollama_data:

@@ -17,17 +17,21 @@
         pkgs.poetry
         pkgs.rustc # For pydantic-core
         pkgs.cargo # For pydantic-core
+        pkgs.fish
       ];
 
-      env.LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-        pkgs.stdenv.cc.cc.lib
-        pkgs.zlib
-        pkgs.rustc
-        pkgs.cargo
-      ];
+      env = {
+         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+            pkgs.stdenv.cc.cc.lib
+            pkgs.zlib
+            pkgs.rustc
+            pkgs.cargo
+         ];
+      };
 
       shellHook = ''
-        echo "You are now using a NIX environment"
+         echo "You are now using a NIX environment"
+         export SHELL="${pkgs.fish}/bin/fish"
       '';
     };
   };
