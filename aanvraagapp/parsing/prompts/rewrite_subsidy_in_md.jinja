@@ -1,4 +1,24 @@
-Extract from the HTML human readable text related to the subsidy into pleasant to read markdown, including links, headers, etc, in the markdown. Disregard webpage headers, footers, navigation, copyright notices, etc. Do as little summarization and keep the text as true to the original on the web page as possible. Reply with only the generated markdown and nothing else. If included on the page, make sure you also include information such as if the subsidy is open or not, the date and time it was last checked, etc.
+Extract from the HTML human readable text related to this subsidy into markdown. The language of extracted text should be the same language as it was in the HTML.
+
+## What you should filter out
+Disregard and filter out anything like:
+1. (navigational) headers and footers.
+2. Copyright notices.
+3. Videos.
+4. Images.
+5. Markup.
+
+## What you should extract
+Extract into markdown and keep anything like:
+1. Information about the subsidy in natural language.
+2. Both internal and external links related to the subsidy.
+
+You are allowed to slightly summarize, but try to keep the extracted text close to the original.
+
+## How to structure your markdown for subsidy information
+Ensure your extracted subsidy text has a clear structure with markdown headers close to the original, with the exception that you should only use the # and ## headers. Headers smaller than that you should incorporate into a section with a # or ## header.
+
+In your reply, respond with only the extracted markdown and nothing else.
 
 The HTML of the web page is:
 

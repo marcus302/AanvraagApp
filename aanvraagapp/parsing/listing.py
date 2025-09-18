@@ -60,15 +60,14 @@ async def parse_listing(listing: models.Listing, session):
 
 
 async def chunk_webpage(webpage: models.Webpage, session):
-    ai_client = create_ai_client("ollama")  # Use ollama by default
+    ai_client = create_ai_client("gemini")  # Use ollama by default
 
     headers_to_split_on = [
         ("#", "Header 1"),
         ("##", "Header 2"),
-        ("###", "Header 3"),
     ]
 
-    markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on)
+    markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on, strip_headers=False)
     md_header_splits = markdown_splitter.split_text(webpage.markdown_content)
     logger.info(f"Split text into {len(md_header_splits)} chunks from webpage {webpage.url}")
     chunks = []

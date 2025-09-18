@@ -33,7 +33,7 @@ async def _search_listing_async(listing_url: str, query: str, limit: int):
     async with async_session_maker() as session:
         # Create embedding for the query
         click.echo(f"🔍 Creating embedding for query: '{query}'")
-        ai_client = create_ai_client("ollama")  # Use ollama by default like in existing patterns
+        ai_client = create_ai_client("gemini")  # Use ollama by default like in existing patterns
         query_embedding = await ai_client.embed_query(query)
         
         # Perform similarity search with single query filtered by listing
@@ -58,7 +58,7 @@ async def _search_client_async(client_name: str, query: str, limit: int):
     async with async_session_maker() as session:
         # Create embedding for the query
         click.echo(f"🔍 Creating embedding for query: '{query}'")
-        ai_client = create_ai_client("ollama")  # Use ollama by default like in existing patterns
+        ai_client = create_ai_client("gemini")  # Use ollama by default like in existing patterns
         query_embedding = await ai_client.embed_query(query)
         
         # Perform similarity search with single query filtered by client

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import numpy as np
+from numpy.linalg import norm
 from typing import Literal, Optional
 import ollama
 from google import genai
@@ -21,13 +22,22 @@ class AIWrapper:
         else:
             raise ValueError(f"Unsupported AI provider: {provider}")
     
+    def _normalize_embedding_if_needed(self, embedding: np.ndarray) -> np.ndarray:
+        """Normalize embedding using L2 normalization if output size is not 3072."""
+        if embedding.shape[-1] != 3072:
+            # Apply L2 normalization
+            normed_embedding = embedding / norm(embedding)
+            return normed_embedding
+        return embedding
+    
     async def generate_content(
         self, 
         prompt: str, 
         model: Optional[str] = None
     ) -> str:
         if self.provider == "gemini":
-            model = model or "gemini-2.5-flash"
+            # model = model or "gemini-2.5-flash"
+            model = model or "gemini-2.0-flash"
             response = await self.gemini_client.models.generate_content(
                 model=model,
                 contents=prompt
@@ -50,33 +60,35 @@ class AIWrapper:
     
     async def embed_content(
         self, 
-        text: str | list[str], 
+        texts: list[str], 
         model: Optional[str] = None
     ) -> np.ndarray:
         if self.provider == "gemini":
             model = model or "gemini-embedding-001"
             result = await self.gemini_client.models.embed_content(
                 model=model,
-                contents=text,
+                contents=texts,
                 config=genai.types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT", output_dimensionality=768),
             )
             assert result.embeddings is not None
-            embedding_values = result.embeddings[0].values
             # TODO: Shape of array that's returned?
-            return np.array(embedding_values, dtype=np.float32)
+            # (len(texts), output_dimensionality)
+            embeddings = np.array([i.values for i in result.embeddings], dtype=np.float32)
+            # Apply normalization if needed
+            return self._normalize_embedding_if_needed(embeddings)
             
         elif self.provider == "ollama":
             model = model or "embeddinggemma:300m"  # Has output dimensionality of 768.
             
             # EmbeddingGemma requires specific prompt formatting for documents
-            if isinstance(text, str):
-                formatted_text = f"title: none | text: {text}"
+            if isinstance(texts, str):
+                formatted_texts = f"title: none | text: {texts}"
             else:
-                formatted_text = [f"title: none | text: {t}" for t in text]
+                formatted_texts = [f"title: none | text: {t}" for t in texts]
             
             response = await ollama.AsyncClient(host=settings.ollama_uri).embed(
                 model=model,
-                input=formatted_text,
+                input=formatted_texts,
             )
             embedding_values = response.embeddings
             # TODO: Shape of array that's returned?
@@ -100,7 +112,9 @@ class AIWrapper:
             assert result.embeddings is not None
             embedding_values = result.embeddings[0].values
             # TODO: Shape of array that's returned?
-            return np.array(embedding_values, dtype=np.float32)
+            embedding = np.array(embedding_values, dtype=np.float32)
+            # Apply normalization if needed
+            return self._normalize_embedding_if_needed(embedding)
             
         elif self.provider == "ollama":
             model = model or "embeddinggemma:300m"  # Has output dimensionality of 768.
