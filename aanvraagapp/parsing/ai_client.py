@@ -8,10 +8,9 @@ import ollama
 from google import genai
 from aanvraagapp.config import settings
 from pydantic import BaseModel
+from aanvraagapp.types import AIProvider
 
 logger = logging.getLogger(__name__)
-
-AIProvider = Literal["gemini", "ollama"]
 
 
 class AIClient(ABC):
@@ -182,7 +181,7 @@ class OllamaAIClient(AIClient):
         return np.array(embedding_values, dtype=np.float32).squeeze(0)
 
 
-def create_ai_client(provider: AIProvider = "gemini") -> AIClient:
+def get_client(provider: AIProvider = "gemini") -> AIClient:
     """Create an AI client instance based on the provider."""
     if provider == "gemini":
         return GeminiAIClient()

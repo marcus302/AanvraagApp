@@ -9,43 +9,7 @@ from .. import models
 from ..dependencies import ValidateCSRF, BasicDeps, RetrieveCSRF
 from ..templates import templates
 from ..database import async_session_maker
-from ..parsing.listing import clean_and_parse_into_md, chunk_webpage
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def parse_website_background_task(client_id: int, website_url: str, session_override: AsyncSession | None = None):
-    """
-    Background task to parse website hierarchy for a newly created client.
-    This runs asynchronously after the client is created so the user gets immediate response.
-    """
-    html_content, cleaned_html, converted_to_markdown = await clean_and_parse_into_md(website_url, "rewrite_client_in_md.jinja")
-
-    session = session_override if session_override is not None else async_session_maker()
-
-    result = await session.execute(
-        select(models.Client)
-        .where(
-            models.Client.id == client_id,
-        )
-    )
-    client = result.scalar_one_or_none()
-    if not client:
-        raise ValueError("Non existing client")
-
-    webpage = models.Webpage(
-        owner_type=models.WebpageOwnerType.CLIENT,
-        owner_id=client.id,
-        url=website_url,
-        original_content=html_content,
-        filtered_content=cleaned_html,
-        markdown_content=converted_to_markdown,
-    )
-    session.add(webpage)
-    await session.flush()
-    await chunk_webpage(webpage, session)
-
-    if session_override is None:
-        await session.close()
 
 
 async def get_clients(deps=BasicDeps):
@@ -132,8 +96,8 @@ async def post_new_client(background_tasks: BackgroundTasks, deps=BasicDeps, csr
     deps.user.clients.append(new_client)
     await deps.session.commit()
 
-    # Add background task to parse the website
-    background_tasks.add_task(parse_website_background_task, new_client.id, website)
+    # TODO: parse client!
+    # background_tasks.add_task(parse_website_background_task, new_client.id, website)
 
     return RedirectResponse(url="/clients", status_code=302)
 

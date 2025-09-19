@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, date
 from typing import List, Optional, Literal
+from aanvraagapp.types import TargetAudience, FinancialInstrument
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, types, CheckConstraint, Boolean, Date
 from sqlalchemy.sql import func
@@ -125,7 +126,11 @@ class Client(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
+
     website: Mapped[str] = mapped_column(String, nullable=False)
+
+    audience_type: Mapped[TargetAudience | None] = mapped_column(String, nullable=True)
+    audience_desc: Mapped[str | None] = mapped_column(String, nullable=True)
 
     users: Mapped[List["User"]] = relationship(
         secondary=user_client_association, back_populates="clients", lazy="select"
@@ -135,7 +140,7 @@ class Client(TimestampMixin, Base):
         back_populates="clients",
         lazy="select",
     )
-    websites = relationship(
+    websites: Mapped[List["Webpage"]] = relationship(
         "Webpage",
         primaryjoin="and_(Client.id==foreign(Webpage.owner_id), Webpage.owner_type=='client')",
         back_populates="client",
@@ -168,11 +173,6 @@ class Application(TimestampMixin, Base):
         back_populates="application", lazy="select"
     )
 
-
-FinancialInstrumentType = Literal["subsidy", "loan", "loan_guarantee", "other"]
-SecondType = Literal["culture", "sustainability", "innovation", "agriculture", "other"]
-
-
 class Listing(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
@@ -184,9 +184,9 @@ class Listing(TimestampMixin, Base):
     closes_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_checked: Mapped[date | None] = mapped_column(Date, nullable=True)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
-    for_mkb: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
-    financial_instrument: Mapped[FinancialInstrumentType | None] = mapped_column(String, nullable=True)
-    sector: Mapped[SecondType | None] = mapped_column(String, nullable=True)
+    target_audience: Mapped[TargetAudience | None] = mapped_column(String, nullable=True)
+    financial_instrument: Mapped[FinancialInstrument | None] = mapped_column(String, nullable=True)
+    target_audience_desc: Mapped[str | None] = mapped_column(String, nullable=True)
 
     provider: Mapped["Provider"] = relationship(
         back_populates="listings", lazy="select"
