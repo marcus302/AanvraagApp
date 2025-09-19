@@ -1,7 +1,7 @@
-from enum import Enum, auto
+from enum import StrEnum, auto
 from typing import Literal
 
-class TargetAudience(str, Enum):
+class TargetAudience(StrEnum):
     SME = auto()
     AGRICULTURE = auto()
     FINANCIAL_INSTITUTION = auto()
@@ -21,7 +21,7 @@ class TargetAudience(str, Enum):
         - OTHER: Choose this if no other option applies.
         """
 
-class FinancialInstrument(str, Enum):
+class FinancialInstrument(StrEnum):
     SUBSIDY = auto()
     LOAN = auto()
     LOAN_GUARANTEE = auto()
