@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 async def clean_and_parse_into_md(url: str, prompt_name: str):
     # Get the raw HTML data from the web page.
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url)
             response.raise_for_status()
             html_content = response.text
@@ -140,7 +140,7 @@ async def parse_field_data_from_listing(listing: models.Listing, session: AsyncS
 # CLIENT
 async def parse_webpage_from_client(client: models.Client, session: AsyncSession):
     html_content, cleaned_html, converted_to_markdown = await clean_and_parse_into_md(
-        client.website, "rewrite_cliend_in_md.jinja"
+        client.website, "rewrite_client_in_md.jinja"
     )
 
     webpage = models.Webpage(
