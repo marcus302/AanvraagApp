@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import datetime, timezone, date
+from typing import List, Optional, Literal
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Table, types, CheckConstraint
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, types, CheckConstraint, Boolean, Date
 from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.declarative import declared_attr
@@ -169,11 +169,24 @@ class Application(TimestampMixin, Base):
     )
 
 
+FinancialInstrumentType = Literal["subsidy", "loan", "loan_guarantee", "other"]
+SecondType = Literal["culture", "sustainability", "innovation", "agriculture", "other"]
+
+
 class Listing(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
 
     website: Mapped[str] = mapped_column(String, nullable=False)
+
+    is_open: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    opens_at: Mapped[date | None] = mapped_column(Date, nullable=True)
+    closes_at: Mapped[date | None] = mapped_column(Date, nullable=True)
+    last_checked: Mapped[date | None] = mapped_column(Date, nullable=True)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
+    for_mkb: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    financial_instrument: Mapped[FinancialInstrumentType | None] = mapped_column(String, nullable=True)
+    sector: Mapped[SecondType | None] = mapped_column(String, nullable=True)
 
     provider: Mapped["Provider"] = relationship(
         back_populates="listings", lazy="select"
@@ -181,7 +194,7 @@ class Listing(TimestampMixin, Base):
     users: Mapped[List["User"]] = relationship(
         secondary=user_listing_association, back_populates="listings", lazy="select"
     )
-    websites = relationship(
+    websites: Mapped[list["Webpage"]] = relationship(
         "Webpage",
         primaryjoin="and_(Listing.id==foreign(Webpage.owner_id), Webpage.owner_type=='listing')",
         back_populates="listing",

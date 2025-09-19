@@ -2,10 +2,11 @@ import asyncio
 import logging
 import numpy as np
 from numpy.linalg import norm
-from typing import Literal, Optional
+from typing import Literal, Optional, Type
 import ollama
 from google import genai
 from aanvraagapp.config import settings
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -33,20 +34,31 @@ class AIWrapper:
     async def generate_content(
         self, 
         prompt: str, 
-        model: Optional[str] = None
+        model: Optional[str] = None,
+        output_schema: Type[BaseModel]| None = None
     ) -> str:
         if self.provider == "gemini":
             # model = model or "gemini-2.5-flash"
             model = model or "gemini-2.0-flash"
+            if output_schema:
+                config = genai.types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=output_schema
+                )
+            else:
+                config = None
             response = await self.gemini_client.models.generate_content(
                 model=model,
-                contents=prompt
+                contents=prompt,
+                config=config,
             )
             assert response.text is not None
             return response.text
             
         elif self.provider == "ollama":
             model = model or "reader-lm:1.5b"
+            if output_schema is not None:
+                raise RuntimeError(f"No output schema support for {self.provider}")
             response = await ollama.AsyncClient(host=settings.ollama_uri).generate(
                 model=model,
                 prompt=prompt,

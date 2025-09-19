@@ -6,6 +6,9 @@ from aanvraagapp.config import settings
 from aanvraagapp.parsing.prompts import prompts
 from .clean import clean_html
 from langchain_text_splitters import MarkdownHeaderTextSplitter
+from pydantic import BaseModel
+from datetime import date
+from typing import Literal
 
 
 logger = logging.getLogger(__name__)
@@ -42,7 +45,30 @@ async def clean_and_parse_into_md(url: str, prompt_name: str):
     return html_content, cleaned_html, converted_to_markdown
 
 
-async def parse_listing(listing: models.Listing, session):
+class ListingFieldData(BaseModel):
+    is_open: bool | None
+    opens_at: date | None
+    closes_at: date | None
+    last_checked: date | None
+    name: str
+    for_mkb: bool | None
+    financial_instrument: Literal["subsidy", "loan", "loan_guarantee", "other"]
+    sector: Literal["culture", "sustainability", "innovation", "agriculture", "other"]
+
+
+async def extract_field_data(md_content: str, prompt_name: str):
+    ai_client = create_ai_client("gemini")  # Use gemini by default
+
+    template = prompts.get_template(prompt_name)
+    prompt_content = template.render(md_content=md_content)
+    ai_client = create_ai_client("gemini")  # Use gemini by default
+    json_with_field_data = await ai_client.generate_content(prompt_content, output_schema=ListingFieldData)
+    # Parse the JSON string into a ListingFieldData instance
+    field_data = ListingFieldData.model_validate_json(json_with_field_data)
+    return field_data
+
+
+async def parse_webpage_from_listing(listing: models.Listing, session):
     html_content, cleaned_html, converted_to_markdown = await clean_and_parse_into_md(listing.website, "rewrite_subsidy_in_md.jinja")
 
     webpage = models.Webpage(
@@ -57,6 +83,28 @@ async def parse_listing(listing: models.Listing, session):
     
     await session.commit()
     return webpage
+
+
+async def parse_field_data_from_listing(listing: models.Listing, session):
+    assert len(listing.websites) > 0, "No parsed websites yet"
+    assert len(listing.websites) == 1, "Support only single website from entry url at this moment"
+
+    webpage = listing.websites[0]
+
+    field_data = await extract_field_data(webpage.markdown_content, "extract_field_data_from_subsidy.jinja")
+    
+    # Update listing with extracted field data
+    listing.is_open = field_data.is_open
+    listing.opens_at = field_data.opens_at
+    listing.closes_at = field_data.closes_at
+    listing.last_checked = field_data.last_checked
+    listing.name = field_data.name
+    listing.for_mkb = field_data.for_mkb
+    listing.financial_instrument = field_data.financial_instrument
+    listing.sector = field_data.sector
+    
+    await session.commit()
+    return listing
 
 
 async def chunk_webpage(webpage: models.Webpage, session):

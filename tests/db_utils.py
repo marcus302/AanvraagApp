@@ -9,7 +9,7 @@ from aanvraagapp.config import settings
 from aanvraagapp.database import async_session_maker
 from aanvraagapp.provider_workflows import run_rvo_workflow
 from sqlalchemy import select
-from aanvraagapp.parsing.listing import parse_listing, chunk_webpage
+from aanvraagapp.parsing.listing import parse_webpage_from_listing, chunk_webpage, parse_field_data_from_listing
 from aanvraagapp.controllers.client import parse_website_background_task
 
 async def delete_tables():
@@ -165,7 +165,14 @@ async def init_db_with_gemini():
             .options(selectinload(models.Listing.provider))
         )
         listing = result.scalar_one()
-        await parse_listing(listing, session)
+        await parse_webpage_from_listing(listing, session)
+        result = await session.execute(
+            select(models.Listing)
+            .where(models.Listing.website == "https://www.rvo.nl/subsidies-financiering/eurostars")
+            .options(selectinload(models.Listing.provider), selectinload(models.Listing.websites))
+        )
+        listing = result.scalar_one()
+        await parse_field_data_from_listing(listing, session)
         result = await session.execute(
             select(models.Webpage)
             .where(models.Webpage.url == "https://www.rvo.nl/subsidies-financiering/eurostars")

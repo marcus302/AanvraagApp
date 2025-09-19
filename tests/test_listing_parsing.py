@@ -1,7 +1,7 @@
 import asyncio
 from aanvraagapp.database import async_session_maker
 from aanvraagapp import models
-from aanvraagapp.parsing.listing import parse_listing, chunk_webpage
+from aanvraagapp.parsing.listing import parse_webpage_from_listing, parse_field_data_from_listing, chunk_webpage
 from aanvraagapp.config import settings
 from aanvraagapp.controllers.client import parse_website_background_task
 from sqlalchemy import select
@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock
 from contextlib import asynccontextmanager
 
 
-async def test_parse_listing(basic_session: AsyncSession):
+async def test_parse_webpage_from_listing(basic_session: AsyncSession):
     result = await basic_session.execute(
         select(models.Listing)
         .where(models.Listing.website == "https://www.rvo.nl/subsidies-financiering/eurostars")
@@ -20,7 +20,19 @@ async def test_parse_listing(basic_session: AsyncSession):
     listing = result.scalar_one_or_none()
     assert listing is not None, "Dummy listing for eurostars does not exist"
     
-    result = await parse_listing(listing, basic_session)
+    result = await parse_webpage_from_listing(listing, basic_session)
+
+
+async def test_parse_field_data_from_listing(basic_session: AsyncSession):
+    result = await basic_session.execute(
+        select(models.Listing)
+        .where(models.Listing.website == "https://www.rvo.nl/subsidies-financiering/eurostars")
+        .options(selectinload(models.Listing.provider), selectinload(models.Listing.websites))
+    )
+    listing = result.scalar_one_or_none()
+    assert listing is not None, "Dummy listing for eurostars does not exist"
+    
+    result = await parse_field_data_from_listing(listing, basic_session)
 
 
 async def test_chunk(basic_session: AsyncSession):
