@@ -63,21 +63,46 @@ class GeminiAIClient(AIClient):
         self, 
         prompt: str, 
         model: Optional[str] = None,
-        output_schema: Type[BaseModel] | None = None
+        output_schema: Type[BaseModel] | None = None,
+        include_thinking: bool = False
     ) -> str:
         model = model or "gemini-2.5-flash"
         if output_schema:
             config = genai.types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=output_schema
+                response_schema=output_schema,
             )
         else:
-            config = None
+            config = genai.types.GenerateContentConfig()
+        
+        if include_thinking:
+            config.thinking_config = genai.types.ThinkingConfig(
+                include_thoughts=True
+            )
+        
         response = await self.client.models.generate_content(
             model=model,
             contents=prompt,
             config=config,
         )
+        
+        # Print all thoughts and final answer if thinking is enabled
+        if include_thinking:
+            assert response.candidates is not None
+            assert response.candidates[0].content is not None
+            assert response.candidates[0].content.parts is not None
+            for part in response.candidates[0].content.parts:
+                if not part.text:
+                    continue
+                if part.thought:
+                    print("Thought summary:")
+                    print(part.text)
+                    print()
+                else:
+                    print("Answer:")
+                    print(part.text)
+                    print()
+        
         assert response.text is not None
         return response.text
     

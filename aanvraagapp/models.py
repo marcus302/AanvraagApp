@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, date
 from typing import List, Optional, Literal
-from aanvraagapp.types import TargetAudience, FinancialInstrument
+from aanvraagapp.types import TargetAudience, FinancialInstrument, BusinessIdentity
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, types, CheckConstraint, Boolean, Date
 from sqlalchemy.sql import func
@@ -137,7 +137,7 @@ class Client(TimestampMixin, Base):
 
     website: Mapped[str] = mapped_column(String, nullable=False)
 
-    business_identity: Mapped[TargetAudience | None] = mapped_column(String, nullable=True)
+    business_identity: Mapped[BusinessIdentity | None] = mapped_column(String, nullable=True)
     audience_desc: Mapped[str | None] = mapped_column(String, nullable=True)
 
     users: Mapped[List["User"]] = relationship(

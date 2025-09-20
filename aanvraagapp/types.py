@@ -23,6 +23,27 @@ class TargetAudience(StrEnum):
         - OTHER: Choose this if no other option applies.
         """
 
+
+class BusinessIdentity(StrEnum):
+    SME = auto()
+    AGRICULTURE = auto()
+    LARGE_COMPANY = auto()
+    NGO_OR_NON_PROFIT = auto()
+    PUBLIC_SECTOR = auto()
+    PRIVATE_INDIVIDUALS = auto()
+    SCHOOL_OR_EDUCATIONAL_INSTITUTION = auto()
+    OTHER = auto()
+
+    @classmethod
+    def get_documentation(cls) -> str:
+        return """
+        - SME: Small and Medium Enterprises. In Dutch called "MKB".
+        - LARGE_COMPANY: Large corporations and enterprises. In Dutch called "Midden/Groot bedrijf".
+        - PUBLIC_SECTOR: Municipalities, provinces, government agencies, etc.
+        - OTHER: Choose this if no other option applies.
+        """
+
+
 class FinancialInstrument(StrEnum):
     SUBSIDY = auto()
     LOAN = auto()

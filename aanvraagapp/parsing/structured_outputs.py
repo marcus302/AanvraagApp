@@ -1,6 +1,6 @@
 from datetime import date
 from pydantic import BaseModel, Field
-from aanvraagapp.types import TargetAudience, FinancialInstrument
+from aanvraagapp.types import TargetAudience, FinancialInstrument, BusinessIdentity
 
 
 class ListingFieldData(BaseModel):
@@ -51,8 +51,10 @@ class ListingFieldData(BaseModel):
 
 
 class ClientFieldData(BaseModel):
-    business_identity: TargetAudience = Field(
-        description="The category that best describes the most probably business identity of this client."
+    business_identity: BusinessIdentity = Field(
+        description="The category that best describes the most probably business identity of "
+        "this client. Note that this is about the client him/herself, and NOT about the client's "
+        "intended customers."
     )
     audience_desc: str = Field(
         description="A high quality description of the client's business, activities, "
@@ -66,10 +68,12 @@ class ClientFieldData(BaseModel):
 
         Use None if you cannot determine the proper value or if the necessary information is missing.
 
+        A common mistake is to assign to business_identity what customers this client looks for, but this is WRONG! You should assign the category that best fits what the client is itself. Customers and partners of the client should have no effect on what gets filled in here!
+
         Additional information about (some) fields or values:
         
         business_identity options:
-        {TargetAudience.get_documentation()}
+        {BusinessIdentity.get_documentation()}
         """
 
 
