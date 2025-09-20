@@ -1,4 +1,5 @@
 import httpx
+from sqlalchemy.dialects.postgresql import insert
 import logging
 from aanvraagapp import models
 from .ai_client import get_client
@@ -9,6 +10,8 @@ from .clean import clean_html
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from typing import TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from typing import Sequence
 
 
 logger = logging.getLogger(__name__)
@@ -121,6 +124,7 @@ async def parse_field_data_from_listing(listing: models.Listing, session: AsyncS
     assert len(listing.websites) == 1, (
         "Support only single website from entry url at this moment"
     )
+    assert len(listing.target_audience_labels) == 0, "Labels are already added to this listing"
 
     webpage = listing.websites[0]
 
@@ -133,9 +137,31 @@ async def parse_field_data_from_listing(listing: models.Listing, session: AsyncS
     listing.closes_at = field_data.closes_at
     listing.last_checked = field_data.last_checked
     listing.name = field_data.name
-    listing.target_audience = field_data.target_audience
     listing.financial_instrument = field_data.financial_instrument
     listing.target_audience_desc = field_data.target_audience_desc
+
+    # Ensure all extracted target audience names exist. If one of them
+    # already exists, no conflict occurs.
+    extracted_target_audience_names = [t.value for t in field_data.target_audiences]
+    for name in extracted_target_audience_names:
+        stmt = insert(models.TargetAudienceLabel).values(name=name)
+        stmt = stmt.on_conflict_do_nothing(index_elements=['name'])
+        await session.execute(stmt)
+    
+    # Flush to ensure inserts are processed
+    await session.flush()
+    
+    # Now fetch all the labels (both newly created and pre-existing)
+    result = await session.execute(
+        select(models.TargetAudienceLabel).where(
+            models.TargetAudienceLabel.name.in_(extracted_target_audience_names)
+        )
+    )
+    target_audience_labels = list(result.scalars().all())
+    
+    # Associate all labels with the listing
+    for label in target_audience_labels:
+        listing.target_audience_labels.append(label)
 
     return listing
 
@@ -171,7 +197,7 @@ async def parse_field_data_from_client(client: models.Client, session: AsyncSess
         webpage.markdown_content, "extract_field_data_from_md.jinja", ClientFieldData
     )
 
-    client.audience_type = field_data.audience_type
+    client.business_identity = field_data.business_identity
     client.audience_desc = field_data.audience_desc
 
     return client

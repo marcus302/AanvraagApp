@@ -36,6 +36,8 @@ async def init_db_with_gemini():
             select(models.Listing)
         )
         random_listings = result.scalars().all()
+
+    # random_listings = random_listings[:1]
     
     # Create async tasks for parse_webpage_from_listing
     async def process_listing_webpage(listing):
@@ -54,6 +56,7 @@ async def init_db_with_gemini():
                 select(models.Listing)
                 .where(models.Listing.id == listing.id)
                 .options(selectinload(models.Listing.websites))
+                .options(selectinload(models.Listing.target_audience_labels))
             )
             listing_with_websites = result.scalar_one()
             

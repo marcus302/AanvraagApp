@@ -59,6 +59,14 @@ client_application_association = Table(
     Column("application_id", Integer, ForeignKey("application.id"), primary_key=True),
 )
 
+
+listing_target_audience_label_association = Table(
+    "listing_target_audience_label_association",
+    Base.metadata,
+    Column("listing_id", Integer, ForeignKey("listing.id"), primary_key=True),
+    Column("target_audience_label_id", Integer, ForeignKey("target_audience_label.id"), primary_key=True),
+)
+
 # client_document_association = Table(
 #     "client_document_association",
 #     Base.metadata,
@@ -129,7 +137,7 @@ class Client(TimestampMixin, Base):
 
     website: Mapped[str] = mapped_column(String, nullable=False)
 
-    audience_type: Mapped[TargetAudience | None] = mapped_column(String, nullable=True)
+    business_identity: Mapped[TargetAudience | None] = mapped_column(String, nullable=True)
     audience_desc: Mapped[str | None] = mapped_column(String, nullable=True)
 
     users: Mapped[List["User"]] = relationship(
@@ -173,6 +181,7 @@ class Application(TimestampMixin, Base):
         back_populates="application", lazy="select"
     )
 
+
 class Listing(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     provider_id: Mapped[int] = mapped_column(ForeignKey("provider.id"))
@@ -184,7 +193,6 @@ class Listing(TimestampMixin, Base):
     closes_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_checked: Mapped[date | None] = mapped_column(Date, nullable=True)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
-    target_audience: Mapped[TargetAudience | None] = mapped_column(String, nullable=True)
     financial_instrument: Mapped[FinancialInstrument | None] = mapped_column(String, nullable=True)
     target_audience_desc: Mapped[str | None] = mapped_column(String, nullable=True)
 
@@ -203,6 +211,22 @@ class Listing(TimestampMixin, Base):
     )
     applications: Mapped[List["Application"]] = relationship(
         back_populates="listing", lazy="select"
+    )
+    target_audience_labels: Mapped[List["TargetAudienceLabel"]] = relationship(
+        secondary=listing_target_audience_label_association,
+        back_populates="listings",
+        lazy="select",
+    )
+
+
+class TargetAudienceLabel(TimestampMixin, Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+
+    listings: Mapped[List["Listing"]] = relationship(
+        secondary=listing_target_audience_label_association,
+        back_populates="target_audience_labels",
+        lazy="select",
     )
 
 
