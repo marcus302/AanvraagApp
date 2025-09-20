@@ -28,12 +28,12 @@ async def init_db_with_gemini():
         spheer, cursoram = await create_dummy_clients(session)
         john, jane, bob = await create_dummy_users(session)
     
-    await run_rvo_workflow()
+    await run_rvo_workflow(limit_to_ten=True)
 
     # Get 10 random listings
     async with async_session_maker() as session: 
         result = await session.execute(
-            select(models.Listing).order_by(func.random()).limit(10)
+            select(models.Listing)
         )
         random_listings = result.scalars().all()
     

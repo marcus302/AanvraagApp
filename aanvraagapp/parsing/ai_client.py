@@ -65,7 +65,7 @@ class GeminiAIClient(AIClient):
         model: Optional[str] = None,
         output_schema: Type[BaseModel] | None = None
     ) -> str:
-        model = model or "gemini-2.0-flash"
+        model = model or "gemini-2.5-flash"
         if output_schema:
             config = genai.types.GenerateContentConfig(
                 response_mime_type="application/json",

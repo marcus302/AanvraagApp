@@ -1,17 +1,17 @@
 from datetime import date
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from aanvraagapp.types import TargetAudience, FinancialInstrument
 
 
 class ListingFieldData(BaseModel):
-    is_open: bool | None
-    opens_at: date | None
-    closes_at: date | None
-    last_checked: date | None
-    name: str
-    target_audience: TargetAudience
-    financial_instrument: FinancialInstrument
-    target_audience_desc: str
+    is_open: bool | None = Field(None, description="Whether the subsidy application is currently open for submissions")
+    opens_at: date | None = Field(None, description="The date when applications open")
+    closes_at: date | None = Field(None, description="The deadline date for applications")
+    last_checked: date | None = Field(None, description="The date when this information was last verified")
+    name: str = Field(description="A good name for the subsidy in Dutch")
+    target_audience: TargetAudience = Field(description="The category that best describes the target audience for this subsidy")
+    financial_instrument: FinancialInstrument = Field(description="The type of financial support offered by this subsidy")
+    target_audience_desc: str = Field(description="A high quality description of who can apply for this subsidy in a couple of sentences in Dutch")
     
     @classmethod
     def get_documentation(cls) -> str:
@@ -22,13 +22,6 @@ class ListingFieldData(BaseModel):
 
         Additional information about (some) fields or values:
         
-        Fields:
-        - is_open: Whether the subsidy application is currently open for submissions
-        - opens_at: The date when applications open
-        - closes_at: The deadline date for applications
-        - last_checked: The date when this information was last verified
-        - target_audience_desc: A high quality description of who can apply for this subsidy
-        
         Target Audience options:
         {TargetAudience.get_documentation()}
         
@@ -38,8 +31,8 @@ class ListingFieldData(BaseModel):
 
 
 class ClientFieldData(BaseModel):
-    audience_type: TargetAudience
-    audience_desc: str
+    audience_type: TargetAudience = Field(description="The category that best describes this client's organization type")
+    audience_desc: str = Field(description="A high quality description of the client's business, activities, and characteristics in a couple of sentences in Dutch")
     
     @classmethod
     def get_documentation(cls) -> str:
@@ -49,10 +42,6 @@ class ClientFieldData(BaseModel):
         Use None if you cannot determine the proper value or if the necessary information is missing.
 
         Additional information about (some) fields or values:
-        
-        Fields:
-        - audience_type: The category that best describes this client's organization type
-        - audience_desc: A high quality description of the client's business, activities, and characteristics in a couple of sentences
         
         Target Audience options:
         {TargetAudience.get_documentation()}

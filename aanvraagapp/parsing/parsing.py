@@ -54,10 +54,13 @@ async def extract_field_data(
 ) -> T:
     ai_client = get_client("gemini")
     template = prompts.get_template(prompt_name)
-    prompt_content = template.render(md_content=md_content)
+    prompt_content = template.render(md_content=md_content, schema=output_schema)
     json_with_field_data = await ai_client.generate_content(
         prompt_content, output_schema=output_schema
     )
+    # Gemini does not support sets in its schema enforcement (unique values),
+    # however, by instantiating the schema, we filter out duplicates for set
+    # fields in Pydantic.
     field_data = output_schema.model_validate_json(json_with_field_data)
     return field_data
 
@@ -122,7 +125,7 @@ async def parse_field_data_from_listing(listing: models.Listing, session: AsyncS
     webpage = listing.websites[0]
 
     field_data = await extract_field_data(
-        webpage.markdown_content, "extract_field_data_from_subsidy.jinja", ListingFieldData
+        webpage.markdown_content, "extract_field_data_from_md.jinja", ListingFieldData
     )
 
     listing.is_open = field_data.is_open
@@ -165,7 +168,7 @@ async def parse_field_data_from_client(client: models.Client, session: AsyncSess
     webpage = client.websites[0]
 
     field_data = await extract_field_data(
-        webpage.markdown_content, "extract_field_data_from_subsidy.jinja", ClientFieldData
+        webpage.markdown_content, "extract_field_data_from_md.jinja", ClientFieldData
     )
 
     client.audience_type = field_data.audience_type

@@ -79,7 +79,7 @@ async def _create_listing_from_subsidy(
     return ListingCreationResult.SUCCESS
 
 
-async def run_rvo_workflow():
+async def run_rvo_workflow(limit_to_ten: bool = False):
     logger.info("Starting RVO workflow")
     async with async_session_maker() as session:
         # Get the RVO provider
@@ -102,6 +102,11 @@ async def run_rvo_workflow():
         try:
             async with httpx.AsyncClient() as client:
                 while True:
+                    # Check if we should stop due to limit
+                    if limit_to_ten and total_successful_listings >= 10:
+                        logger.info(f"Reached limit of 10 valid listings, stopping workflow")
+                        break
+                    
                     # Fetch current page
                     page_url = f"{API_URL}?page={page}"
                     logger.info(f"Fetching page {page} from RVO API")
@@ -136,6 +141,11 @@ async def run_rvo_workflow():
                         page_skipped_listings = 0
                         page_already_existing_listings = 0
                         for subsidy in subsidies:
+                            # Check if we should stop due to limit
+                            if limit_to_ten and total_successful_listings >= 10:
+                                logger.info(f"Reached limit of 10 valid listings, stopping processing")
+                                break
+                                
                             result = await _create_listing_from_subsidy(session, provider, subsidy)
                             if result == ListingCreationResult.SUCCESS:
                                 page_successful_listings += 1
@@ -152,6 +162,11 @@ async def run_rvo_workflow():
                         total_already_existing_listings += page_already_existing_listings
                         
                         logger.info(f"Page {page} completed: {page_successful_listings} new listings created, {page_already_existing_listings} already existed, {page_failed_listings} failed, {page_skipped_listings} skipped.")
+                        
+                        # Check if we should stop due to limit
+                        if limit_to_ten and total_successful_listings >= 10:
+                            logger.info(f"Reached limit of 10 valid listings, stopping workflow")
+                            break
                         
                         # Move to next page
                         page += 1
