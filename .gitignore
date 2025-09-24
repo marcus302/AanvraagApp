@@ -208,3 +208,7 @@ __marimo__/
 
 # Sqlite
 aanvraagapp.db
+
+# Env
+.local.container.env
+.local.localhost.env
