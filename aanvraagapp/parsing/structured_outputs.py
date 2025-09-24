@@ -77,4 +77,22 @@ class ClientFieldData(BaseModel):
         """
 
 
+class ClientListingMatchScore(BaseModel):
+    score: float = Field(
+        description="A score between 0.0 and 1.0 indicating how well the client matches the listing"
+    )
+    reasoning: str = Field(
+        description="Brief explanation of why this score was assigned"
+    )
+    
+    @classmethod
+    def get_documentation(cls) -> str:
+        return """
+        ClientListingMatchScore represents how well a client matches a listing:
+        
+        - score: A float between 0.0 and 1.0 where 1.0 is a perfect match
+        - reasoning: A brief explanation of the scoring decision
+        """
+
+
 StructuredOutputSchema = ListingFieldData | ClientFieldData

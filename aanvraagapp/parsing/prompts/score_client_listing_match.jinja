@@ -1,0 +1,22 @@
+# TODO: Fill in prompt content for scoring client-listing matches
+
+Client information:
+- Name: {{client.name}}
+- Website: {{client.website}}
+- Business Identity: {{client.business_identity}}
+- Audience Description: {{client.audience_desc}}
+
+Client Website Content:
+{{client_webpage.markdown_content | safe}}
+
+Listing information:
+- Name: {{listing.name}}
+- Website: {{listing.website}}
+- Financial Instrument: {{listing.financial_instrument}}
+- Target Audience Description: {{listing.target_audience_desc}}
+- Is Open: {{listing.is_open}}
+
+Listing Website Content:
+{{listing_webpage.markdown_content | safe}}
+
+# TODO: Add instructions for scoring the match 

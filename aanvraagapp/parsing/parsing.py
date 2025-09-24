@@ -8,10 +8,13 @@ from aanvraagapp.parsing.prompts import prompts
 from aanvraagapp.parsing.structured_outputs import StructuredOutputSchema, ListingFieldData, ClientFieldData
 from .clean import clean_html
 from langchain_text_splitters import MarkdownHeaderTextSplitter
-from typing import TypeVar
+from typing import TypeVar, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import Sequence
+from aanvraagapp.types import FinancialInstrument
+from pydantic import BaseModel, Field
 
 
 logger = logging.getLogger(__name__)
@@ -152,7 +155,6 @@ async def parse_field_data_from_listing(listing: models.Listing, session: AsyncS
     await session.flush()
     
     # Now fetch all the labels (both newly created and pre-existing)
-    # (This query also ensures duplicate target audience names by Gemini are removed)
     result = await session.execute(
         select(models.TargetAudienceLabel).where(
             models.TargetAudienceLabel.name.in_(extracted_target_audience_names)
@@ -202,3 +204,67 @@ async def parse_field_data_from_client(client: models.Client, session: AsyncSess
     client.audience_desc = field_data.audience_desc
 
     return client
+
+
+async def score_client_listing_match(
+    client: models.Client, 
+    listing: models.Listing, 
+    session: AsyncSession
+) -> ClientListingMatchScore:
+    assert len(client.websites) > 0, "Client must have parsed websites"
+    assert len(listing.websites) > 0, "Listing must have parsed websites"
+    
+    client_webpage = client.websites[0]
+    listing_webpage = listing.websites[0]
+    
+    # Format the prompt
+    template = prompts.get_template("score_client_listing_match.jinja")
+    prompt_content = template.render(
+        client=client,
+        client_webpage=client_webpage,
+        listing=listing,
+        listing_webpage=listing_webpage
+    )
+    
+    # Generate structured output using AI
+    ai_client = get_client("gemini")
+    json_with_score = await ai_client.generate_content(
+        prompt_content, output_schema=ClientListingMatchScore
+    )
+    
+    # Parse and return the structured output
+    match_score = ClientListingMatchScore.model_validate_json(json_with_score)
+    return match_score
+
+
+# SEARCH
+async def search_suitable_listings(
+    client: models.Client, 
+    session: AsyncSession, 
+    is_open: bool, 
+    financial_instruments: List[FinancialInstrument]
+) -> Sequence[models.Listing] | None:
+    assert len(client.websites) > 0, "Client must have parsed websites"
+    assert len(client.websites) == 1, "Only support one website for now"
+    
+    query = select(models.Listing).join(
+        models.Listing.target_audience_labels
+    ).options(
+        selectinload(models.Listing.websites)
+    ).where(
+        models.TargetAudienceLabel.name == client.business_identity,
+        models.Listing.is_open == is_open,
+        models.Listing.financial_instrument.in_(financial_instruments)
+    )
+    result = await session.execute(query)
+    suitable_listings = list(result.scalars().all())
+
+    if len(suitable_listings) == 0:
+        return None
+    
+    for listing in suitable_listings:
+        match_score = await score_client_listing_match(client, listing, session)
+        # TODO: Store or use the match_score as needed
+    
+    # TODO: finish this
+    return suitable_listings
