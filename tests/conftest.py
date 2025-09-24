@@ -3,8 +3,10 @@ import asyncio
 from aanvraagapp import models
 from aanvraagapp.config import LocalDatabaseSettings
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, AsyncTransaction, async_sessionmaker, create_async_engine
+from sqlalchemy.sql import text
 from typing import AsyncGenerator
-from tests import db_utils
+from tests.db import utils as db_utils
+from tests.db import dummy as db_dummy
 
 
 basic_testsuite_db_config = LocalDatabaseSettings(
@@ -47,27 +49,33 @@ async def basic_testsuite(request, anyio_backend) -> AsyncGenerator[AsyncConnect
         engine, expire_on_commit=False, class_=AsyncSession,
     )
 
+    # Setup - drop everything first
     async with engine.begin() as transaction:
         print("dropping - startup")
+        await transaction.execute(text(db_utils.DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await transaction.run_sync(models.Base.metadata.drop_all)
     
+    # Create tables and views
     async with engine.begin() as transaction:
         print("creating - startup")
         await transaction.run_sync(models.Base.metadata.create_all)
+        await transaction.execute(text(db_utils.LISTINGS_WITH_AUDIENCES_VIEW_SQL))
 
     async with async_session_maker() as session:
         print("adding basic test data set - startup")
         rvo, snn = await db_utils.create_dummy_providers(session)
         spheer, cursoram = await db_utils.create_dummy_clients(session)
         john, jane, bob = await db_utils.create_dummy_users(session)
-        eurostars = await db_utils.create_dummy_listing(session, rvo)
-        await db_utils.create_dummy_webpage(session, eurostars)
+        eurostars = await db_dummy.create_dummy_listing(session, rvo)
+        await db_dummy.create_dummy_webpage(session, eurostars)
 
     async with engine.connect() as connection:
         yield connection
 
+    # Teardown - drop views first, then tables
     async with engine.begin() as transaction:
         print("dropping - teardown")
+        await transaction.execute(text(db_utils.DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await transaction.run_sync(models.Base.metadata.drop_all)
 
     await engine.dispose()
@@ -96,27 +104,33 @@ async def parsed_chunks_testsuite(request, anyio_backend) -> AsyncGenerator[Asyn
         engine, expire_on_commit=False, class_=AsyncSession,
     )
 
+    # Setup - drop everything first
     async with engine.begin() as transaction:
         print("dropping - startup")
+        await transaction.execute(text(db_utils.DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await transaction.run_sync(models.Base.metadata.drop_all)
     
+    # Create tables and views
     async with engine.begin() as transaction:
         print("creating - startup")
         await transaction.run_sync(models.Base.metadata.create_all)
+        await transaction.execute(text(db_utils.LISTINGS_WITH_AUDIENCES_VIEW_SQL))
 
     async with async_session_maker() as session:
         print("adding basic test data set - startup")
         rvo, snn = await db_utils.create_dummy_providers(session)
         spheer, cursoram = await db_utils.create_dummy_clients(session)
         john, jane, bob = await db_utils.create_dummy_users(session)
-        eurostars = await db_utils.create_dummy_listing(session, rvo)
-        await db_utils.create_dummy_webpage(session, eurostars)
+        eurostars = await db_dummy.create_dummy_listing(session, rvo)
+        await db_dummy.create_dummy_webpage(session, eurostars)
 
     async with engine.connect() as connection:
         yield connection
 
+    # Teardown - drop views first, then tables
     async with engine.begin() as transaction:
         print("dropping - teardown")
+        await transaction.execute(text(db_utils.DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await transaction.run_sync(models.Base.metadata.drop_all)
 
     await engine.dispose()

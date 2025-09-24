@@ -1,7 +1,45 @@
 from aanvraagapp import models
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import text
 from aanvraagapp.config import settings
 from aanvraagapp.dependencies.auth import password_helper
+
+
+# Database view management
+LISTINGS_WITH_AUDIENCES_VIEW_SQL = """
+CREATE OR REPLACE VIEW listings_with_target_audiences AS
+SELECT 
+    l.id,
+    l.provider_id,
+    l.website,
+    l.is_open,
+    l.opens_at,
+    l.closes_at,
+    l.last_checked,
+    l.name,
+    l.financial_instrument,
+    l.target_audience_desc,
+    l.created_at,
+    l.updated_at,
+    COALESCE(
+        STRING_AGG(tal.name, ', ' ORDER BY tal.name), 
+        ''
+    ) AS target_audiences_concatenated
+FROM 
+    listing l
+LEFT JOIN 
+    listing_target_audience_label_association ltala ON l.id = ltala.listing_id
+LEFT JOIN 
+    target_audience_label tal ON ltala.target_audience_label_id = tal.id
+GROUP BY 
+    l.id, l.provider_id, l.website, l.is_open, l.opens_at, l.closes_at, 
+    l.last_checked, l.name, l.financial_instrument, l.target_audience_desc, 
+    l.created_at, l.updated_at;
+"""
+
+DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL = """
+DROP VIEW IF EXISTS listings_with_target_audiences;
+"""
 
 
 async def create_dummy_users(session):
@@ -74,19 +112,20 @@ async def create_dummy_clients(session):
     return dummy_clients
 
 
-async def delete_tables():
+async def drop_views_and_tables():
     engine = create_async_engine(settings.database.database_uri)
+    
     async with engine.begin() as conn:
+        await conn.execute(text(DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await conn.run_sync(models.Base.metadata.drop_all)
     await engine.dispose()
 
 
-async def create_db_and_tables():
+async def create_views_and_tables():
     engine = create_async_engine(settings.database.database_uri)
+    
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
+        await conn.execute(text(LISTINGS_WITH_AUDIENCES_VIEW_SQL))
+    
     await engine.dispose()
-
-
-async def cleanup_db():
-    await delete_tables()

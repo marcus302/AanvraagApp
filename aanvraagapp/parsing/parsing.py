@@ -152,6 +152,7 @@ async def parse_field_data_from_listing(listing: models.Listing, session: AsyncS
     await session.flush()
     
     # Now fetch all the labels (both newly created and pre-existing)
+    # (This query also ensures duplicate target audience names by Gemini are removed)
     result = await session.execute(
         select(models.TargetAudienceLabel).where(
             models.TargetAudienceLabel.name.in_(extracted_target_audience_names)

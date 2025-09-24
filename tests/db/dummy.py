@@ -1,6 +1,6 @@
 from aanvraagapp import models
 from .utils import (
-    create_db_and_tables,
+    create_views_and_tables,
     create_dummy_clients,
     create_dummy_providers,
     create_dummy_users,
@@ -46,7 +46,7 @@ async def create_dummy_webpage(session, listing: models.Listing):
 
 async def init_db_with_dummy():
     """Initialize db with dummy data, no Gemini usage."""
-    await create_db_and_tables()
+    await create_views_and_tables()
     async with async_session_maker() as session:
         rvo, snn = await create_dummy_providers(session)
         spheer, cursoram = await create_dummy_clients(session)
