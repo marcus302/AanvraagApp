@@ -2,7 +2,13 @@ import pytest
 import asyncio
 from aanvraagapp import models
 from aanvraagapp.config import LocalDatabaseSettings
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, AsyncTransaction, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncSession,
+    AsyncTransaction,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.sql import text
 from typing import AsyncGenerator
 from tests.db import utils as db_utils
@@ -10,22 +16,22 @@ from tests.db import dummy as db_dummy
 
 
 basic_testsuite_db_config = LocalDatabaseSettings(
-    provider = "local",
-    host = "127.0.0.1",
-    port = "5432",
-    db = "basic_testsuite",
-    user = "mark",
-    password = "mark",
+    provider="local",
+    host="127.0.0.1",
+    port="5432",
+    db="basic_testsuite",
+    user="mark",
+    password="mark",
 )
 
 
 parsed_chunks_testsuite_db_config = LocalDatabaseSettings(
-    provider = "local",
-    host = "127.0.0.1",
-    port = "5432",
-    db = "parsed_chunks_testsuite",
-    user = "mark",
-    password = "mark",
+    provider="local",
+    host="127.0.0.1",
+    port="5432",
+    db="parsed_chunks_testsuite",
+    user="mark",
+    password="mark",
 )
 
 
@@ -43,10 +49,14 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-async def basic_testsuite(request, anyio_backend) -> AsyncGenerator[AsyncConnection, None]:
+async def basic_testsuite(
+    request, anyio_backend
+) -> AsyncGenerator[AsyncConnection, None]:
     engine = create_async_engine(basic_testsuite_db_config.database_uri)
     async_session_maker = async_sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession,
+        engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
     )
 
     # Setup - drop everything first
@@ -54,7 +64,7 @@ async def basic_testsuite(request, anyio_backend) -> AsyncGenerator[AsyncConnect
         print("dropping - startup")
         await transaction.execute(text(db_utils.DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await transaction.run_sync(models.Base.metadata.drop_all)
-    
+
     # Create tables and views
     async with engine.begin() as transaction:
         print("creating - startup")
@@ -83,7 +93,7 @@ async def basic_testsuite(request, anyio_backend) -> AsyncGenerator[AsyncConnect
 
 @pytest.fixture(scope="function")
 async def basic_session(
-    basic_testsuite: AsyncConnection
+    basic_testsuite: AsyncConnection,
 ) -> AsyncGenerator[AsyncSession, None]:
     async with basic_testsuite.begin() as transaction:
         async_session = AsyncSession(
@@ -98,10 +108,14 @@ async def basic_session(
 
 
 @pytest.fixture(scope="session")
-async def parsed_chunks_testsuite(request, anyio_backend) -> AsyncGenerator[AsyncConnection, None]:
+async def parsed_chunks_testsuite(
+    request, anyio_backend
+) -> AsyncGenerator[AsyncConnection, None]:
     engine = create_async_engine(parsed_chunks_testsuite_db_config.database_uri)
     async_session_maker = async_sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession,
+        engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
     )
 
     # Setup - drop everything first
@@ -109,7 +123,7 @@ async def parsed_chunks_testsuite(request, anyio_backend) -> AsyncGenerator[Asyn
         print("dropping - startup")
         await transaction.execute(text(db_utils.DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await transaction.run_sync(models.Base.metadata.drop_all)
-    
+
     # Create tables and views
     async with engine.begin() as transaction:
         print("creating - startup")
@@ -138,7 +152,7 @@ async def parsed_chunks_testsuite(request, anyio_backend) -> AsyncGenerator[Asyn
 
 @pytest.fixture(scope="function")
 async def parsed_chunks_session(
-    parsed_chunks_testsuite: AsyncConnection
+    parsed_chunks_testsuite: AsyncConnection,
 ) -> AsyncGenerator[AsyncSession, None]:
     async with parsed_chunks_testsuite.begin() as transaction:
         async_session = AsyncSession(

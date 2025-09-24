@@ -114,7 +114,7 @@ async def create_dummy_clients(session):
 
 async def drop_views_and_tables():
     engine = create_async_engine(settings.database.database_uri)
-    
+
     async with engine.begin() as conn:
         await conn.execute(text(DROP_LISTINGS_WITH_AUDIENCES_VIEW_SQL))
         await conn.run_sync(models.Base.metadata.drop_all)
@@ -123,9 +123,9 @@ async def drop_views_and_tables():
 
 async def create_views_and_tables():
     engine = create_async_engine(settings.database.database_uri)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
         await conn.execute(text(LISTINGS_WITH_AUDIENCES_VIEW_SQL))
-    
+
     await engine.dispose()

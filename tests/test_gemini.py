@@ -10,24 +10,28 @@ async def test_gemini_url_context():
     """
     client = genai.Client(api_key=settings.gemini_api_key).aio
 
-    tools = [
-        {"url_context": {}}
-    ]
+    tools = [{"url_context": {}}]
 
     test_url = "https://www.rvo.nl/subsidies-financiering/besluit-bijstandverlening-zelfstandigen-bbz"
-    
+
     # Use URL context to summarize the page
     response = await client.models.generate_content(
         model="gemini-2.5-flash",
         contents=f"Summarize the requirements for the subsidy at {test_url}",
-        config=genai.types.GenerateContentConfig(
-            tools=tools
-        )
+        config=genai.types.GenerateContentConfig(tools=tools),
     )
 
     assert response.candidates is not None
     assert response.candidates[0].url_context_metadata is not None
     assert response.candidates[0].url_context_metadata.url_metadata is not None
-    assert response.candidates[0].url_context_metadata.url_metadata[0].url_retrieval_status is not None
+    assert (
+        response.candidates[0].url_context_metadata.url_metadata[0].url_retrieval_status
+        is not None
+    )
 
-    assert response.candidates[0].url_context_metadata.url_metadata[0].url_retrieval_status.value == "URL_RETRIEVAL_STATUS_ERROR"
+    assert (
+        response.candidates[0]
+        .url_context_metadata.url_metadata[0]
+        .url_retrieval_status.value
+        == "URL_RETRIEVAL_STATUS_ERROR"
+    )
