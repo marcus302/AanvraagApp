@@ -33,6 +33,24 @@ To drop all database tables:
 poetry run python -m tests.db_utils teardown
 ```
 
+### Database backup and restore
+
+To create a backup of the "mark" database in plain SQL format:
+
+```bash
+docker exec -i $(docker-compose ps -q db) pg_dump -U mark -d mark --no-owner --no-privileges > backup_mark.sql
+```
+
+To restore a backup to a database with an arbitrary name:
+
+```bash
+# First, create the target database (replace 'new_database_name' with your desired name)
+docker exec -i $(docker-compose ps -q db) psql -U mark -c "CREATE DATABASE new_database_name;"
+
+# Then restore the backup to the new database
+docker exec -i $(docker-compose ps -q db) psql -U mark -d new_database_name < backup_mark.sql
+```
+
 ## Linting and formatting
 
 Check for issues:
