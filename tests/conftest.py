@@ -13,6 +13,7 @@ from sqlalchemy.sql import text
 from typing import AsyncGenerator
 from tests.db import utils as db_utils
 from tests.db import dummy as db_dummy
+import subprocess
 
 
 basic_testsuite_db_config = LocalDatabaseSettings(
@@ -112,11 +113,6 @@ async def parsed_chunks_testsuite(
     request, anyio_backend
 ) -> AsyncGenerator[AsyncConnection, None]:
     engine = create_async_engine(parsed_chunks_testsuite_db_config.database_uri)
-    async_session_maker = async_sessionmaker(
-        engine,
-        expire_on_commit=False,
-        class_=AsyncSession,
-    )
 
     # Setup - drop everything first
     async with engine.begin() as transaction:
@@ -130,13 +126,27 @@ async def parsed_chunks_testsuite(
         await transaction.run_sync(models.Base.metadata.create_all)
         await transaction.execute(text(db_utils.LISTINGS_WITH_AUDIENCES_VIEW_SQL))
 
-    async with async_session_maker() as session:
-        print("adding basic test data set - startup")
-        rvo, snn = await db_utils.create_dummy_providers(session)
-        spheer, cursoram = await db_utils.create_dummy_clients(session)
-        john, jane, bob = await db_utils.create_dummy_users(session)
-        eurostars = await db_dummy.create_dummy_listing(session, rvo)
-        await db_dummy.create_dummy_webpage(session, eurostars)
+    with open("backup_mark.sql", "r") as f:
+        container_id = subprocess.check_output(
+            ["docker-compose", "ps", "-q", "db"],
+            text=True
+        ).strip()
+
+        restore_cmd = [
+            "docker", "exec", "-i", container_id,
+            "psql", "-U", parsed_chunks_testsuite_db_config.user, "-d", parsed_chunks_testsuite_db_config.db,
+            "--quiet",  # Suppress unnecessary output
+            "--no-psqlrc",  # Don't read startup file
+            "--single-transaction",  # Wrap in transaction for atomicity
+        ]
+
+        result = subprocess.run(
+            restore_cmd,
+            stdin=f,
+            capture_output=True,
+            text=True
+        )
+        assert result.returncode == 0, "Backup restore failed"
 
     async with engine.connect() as connection:
         yield connection
