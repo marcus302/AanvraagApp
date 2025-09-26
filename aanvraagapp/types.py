@@ -1,5 +1,6 @@
 from enum import StrEnum, auto
 from typing import Literal
+import textwrap
 
 class TargetAudience(StrEnum):
     SME = auto()
@@ -15,13 +16,13 @@ class TargetAudience(StrEnum):
     
     @classmethod
     def get_documentation(cls) -> str:
-        return """
+        return textwrap.dedent("""
         - SME: Small and Medium Enterprises. In Dutch called "MKB".
         - FINANCIAL_INSTITUTION: Banks, credit unions, and other financial entities.
         - LARGE_COMPANY: Large corporations and enterprises. In Dutch called "Midden/Groot bedrijf".
         - PUBLIC_SECTOR: Municipalities, provinces, government agencies, etc.
         - OTHER: Choose this if no other option applies.
-        """
+        """).strip()
 
 
 class BusinessIdentity(StrEnum):
@@ -36,12 +37,12 @@ class BusinessIdentity(StrEnum):
 
     @classmethod
     def get_documentation(cls) -> str:
-        return """
+        return textwrap.dedent("""
         - SME: Small and Medium Enterprises. In Dutch called "MKB".
         - LARGE_COMPANY: Large corporations and enterprises. In Dutch called "Midden/Groot bedrijf".
         - PUBLIC_SECTOR: Municipalities, provinces, government agencies, etc.
         - OTHER: Choose this if no other option applies.
-        """
+        """).strip()
 
 
 class FinancialInstrument(StrEnum):
@@ -52,10 +53,26 @@ class FinancialInstrument(StrEnum):
     
     @classmethod
     def get_documentation(cls) -> str:
-        return """
+        return textwrap.dedent("""
         - LOAN_GUARANTEE: A construction where there is an entity that is willing to offer collateral so that a loan can be granted.
         - OTHER: Choose this if no other option applies.
-        """
+        """).strip()
+
+
+class ConditionEval(StrEnum):
+    PASSES = auto()
+    UNCLEAR = auto()
+    FAILS = auto()
+    OPPORTUNITY = auto()
+
+    @classmethod
+    def get_documentation(cls) -> str:
+        return textwrap.dedent("""
+        - PASSES: We can say with near certainty that the condition is fully met.
+        - UNCLEAR: There is not enough information to say that the condition is met or not. We are reasonably sure that the client cannot adapt to this condition and become eligible.
+        - FAILS: We can say with near certainty that the client fails to meet the condition for this listing.
+        - OPPORTUNITY: There is no clear indication that this condition is met, but this is a reasonable opportunity for the client to adapt to the condition and become eligible.
+        """).strip()
 
 
 AIProvider = Literal["gemini", "ollama"]

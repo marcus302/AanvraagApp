@@ -35,7 +35,7 @@ async def init_db_with_gemini():
         result = await session.execute(select(models.Listing))
         random_listings = result.scalars().all()
 
-    random_listings = random_listings[:1]
+    # random_listings = random_listings[:1]
 
     # Create async tasks for parse_webpage_from_listing
     async def process_listing_webpage(listing):

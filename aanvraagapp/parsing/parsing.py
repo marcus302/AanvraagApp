@@ -5,7 +5,7 @@ from aanvraagapp import models
 from .ai_client import get_client
 from aanvraagapp.config import settings
 from aanvraagapp.parsing.prompts import prompts
-from aanvraagapp.parsing.structured_outputs import StructuredOutputSchema, ListingFieldData, ClientFieldData
+from aanvraagapp.parsing.structured_outputs import StructuredOutputSchema, ListingFieldData, ClientFieldData, ClientListingMatchResult
 from .clean import clean_html
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from typing import TypeVar, List
@@ -210,30 +210,26 @@ async def score_client_listing_match(
     client: models.Client, 
     listing: models.Listing, 
     session: AsyncSession
-) -> ClientListingMatchScore:
+) -> ClientListingMatchResult:
     assert len(client.websites) > 0, "Client must have parsed websites"
     assert len(listing.websites) > 0, "Listing must have parsed websites"
     
     client_webpage = client.websites[0]
     listing_webpage = listing.websites[0]
     
-    # Format the prompt
     template = prompts.get_template("score_client_listing_match.jinja")
     prompt_content = template.render(
-        client=client,
-        client_webpage=client_webpage,
-        listing=listing,
-        listing_webpage=listing_webpage
+        schema=ClientListingMatchResult,
+        client_md_content=client_webpage.markdown_content,
+        subsidy_md_content=listing_webpage.markdown_content,
     )
     
-    # Generate structured output using AI
     ai_client = get_client("gemini")
     json_with_score = await ai_client.generate_content(
-        prompt_content, output_schema=ClientListingMatchScore
+        prompt_content, output_schema=ClientListingMatchResult
     )
     
-    # Parse and return the structured output
-    match_score = ClientListingMatchScore.model_validate_json(json_with_score)
+    match_score = ClientListingMatchResult.model_validate_json(json_with_score)
     return match_score
 
 
@@ -243,7 +239,7 @@ async def search_suitable_listings(
     session: AsyncSession, 
     is_open: bool, 
     financial_instruments: List[FinancialInstrument]
-) -> Sequence[models.Listing] | None:
+) -> Sequence[ClientListingMatchResult] | None:
     assert len(client.websites) > 0, "Client must have parsed websites"
     assert len(client.websites) == 1, "Only support one website for now"
     
@@ -262,9 +258,10 @@ async def search_suitable_listings(
     if len(suitable_listings) == 0:
         return None
     
+    match_results: list[ClientListingMatchResult] = []
     for listing in suitable_listings:
-        match_score = await score_client_listing_match(client, listing, session)
-        # TODO: Store or use the match_score as needed
+        match_result = await score_client_listing_match(client, listing, session)
+        match_results.append(match_result)
     
     # TODO: finish this
-    return suitable_listings
+    return match_results

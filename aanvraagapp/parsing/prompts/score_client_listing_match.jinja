@@ -1,22 +1,19 @@
-# TODO: Fill in prompt content for scoring client-listing matches
+Extract the provided schema from given markdown texts.
 
-Client information:
-- Name: {{client.name}}
-- Website: {{client.website}}
-- Business Identity: {{client.business_identity}}
-- Audience Description: {{client.audience_desc}}
+Documentation regarding the schema is:
 
-Client Website Content:
-{{client_webpage.markdown_content | safe}}
+---
+{{schema.get_documentation() | safe}}
+---
 
-Listing information:
-- Name: {{listing.name}}
-- Website: {{listing.website}}
-- Financial Instrument: {{listing.financial_instrument}}
-- Target Audience Description: {{listing.target_audience_desc}}
-- Is Open: {{listing.is_open}}
+The markdown text with the client description is:
 
-Listing Website Content:
-{{listing_webpage.markdown_content | safe}}
+---
+{{client_md_content | safe}}
+---
 
-# TODO: Add instructions for scoring the match 
+The markdown text with the subsidy description is:
+
+---
+{{subsidy_md_content | safe}}
+---
