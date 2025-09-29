@@ -5,8 +5,10 @@ from aanvraagapp.types import (
     FinancialInstrument,
     BusinessIdentity,
     ConditionEval,
+    MatchEval
 )
 import textwrap
+from inspect import cleandoc
 
 
 class ListingFieldData(BaseModel):
@@ -38,7 +40,7 @@ class ListingFieldData(BaseModel):
 
     @classmethod
     def get_documentation(cls) -> str:
-        return textwrap.dedent(f"""
+        return cleandoc(f"""
         ListingFieldData represents information about a listing:
 
         Use None if you cannot determine the proper value or if the necessary information is missing.
@@ -50,7 +52,7 @@ class ListingFieldData(BaseModel):
         
         fiancial_instrument options:
         {FinancialInstrument.get_documentation()}
-        """).strip()
+        """)
 
 
 class ClientFieldData(BaseModel):
@@ -65,7 +67,7 @@ class ClientFieldData(BaseModel):
 
     @classmethod
     def get_documentation(cls) -> str:
-        return textwrap.dedent(f"""
+        return cleandoc(f"""
         ClientFieldData represents information about a client:
 
         Use None if you cannot determine the proper value or if the necessary information is missing.
@@ -76,7 +78,7 @@ class ClientFieldData(BaseModel):
         
         business_identity options:
         {BusinessIdentity.get_documentation()}
-        """).strip()
+        """)
 
 
 class ClientListingMatchCondition(BaseModel):
@@ -84,7 +86,7 @@ class ClientListingMatchCondition(BaseModel):
         description="One or several sentences to describe the condition."
     )
     condition_eval: ConditionEval = Field(
-        description="The evaluation of the condition in condition_desc on the basis of the client and listing subscription."
+        description="The evaluation of the condition in condition_desc on the basis of the client and listing description."
     )
     reasoning: str = Field(
         description="Brief explanation of why the condition was evaluated with this result."
@@ -98,15 +100,18 @@ class ClientListingMatchResult(BaseModel):
     listing_ambiguous: bool = Field(
         description="Set this to True and conditions to an empty list if the listing does not represent a coherent whole that a single set of conditions can be defined for. Set to False if this is possible, in which case the list of conditions should be set."
     )
+    match_quality: MatchEval = Field(
+        description="Your final judgement regarding how this client listing match should be evaluated; to what degree is it a good match? Decide on this looking at your given conditions and your evaluation of them."
+    )
 
     @classmethod
     def get_documentation(cls) -> str:
-        return textwrap.dedent(f"""
+        return cleandoc(f"""
         ClientListingMatchResult represents information about a combination of a client and a listing:
 
-        Set listing_ambiguous to False and conditions to an empty list if the given listing does not form a coherent whole or single unit. This sometimes happens when a listing actually represents multiple different sub listings, for example.
+        Set listing_ambiguous to False and conditions to an empty list if the given listing does not form a coherent whole or single unit. This sometimes happens when a listing actually represents multiple different sub listings, for example. In this case, you can always set the match_quality to BAD.
 
-        Set listing_ambiguous to True and fill in conditions with all conditions that the client has to meet in order to be eligible for the listing. For each condition, you'll have to evaluate it and give your reasoning.
+        Set listing_ambiguous to True and fill in conditions with all conditions that the client has to meet in order to be eligible for the listing. For each condition, you'll have to evaluate it and give your reasoning. Then use these results to set match_quality.
 
         Some example scenarios to help you evaluate conditions:
         1. The listing description states that only pharmaceutical companies can apply. The client description does not contain any reference to this, and describes a software company. The condition therefore FAILS.
@@ -119,7 +124,10 @@ class ClientListingMatchResult(BaseModel):
 
         condition_eval:
         {ConditionEval.get_documentation()}
-        """).strip()
+
+        match_quality:
+        {MatchEval.get_documentation()}
+        """)
 
 
 StructuredOutputSchema = ListingFieldData | ClientFieldData
